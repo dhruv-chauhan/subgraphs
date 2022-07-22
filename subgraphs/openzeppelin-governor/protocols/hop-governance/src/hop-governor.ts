@@ -14,18 +14,20 @@ import {
   _handleProposalExecuted,
   _handleProposalQueued,
   _handleVoteCast,
+  getOrCreateProposal,
 } from "../../../src/handlers";
 import { HOPGovernor } from "../../../generated/HOPGovernor/HOPGovernor";
 import { GovernanceFramework } from "../../../generated/schema";
-import { GovernanceFrameworkType } from "../../../src/constants";
+import { BIGINT_ONE, GovernanceFrameworkType } from "../../../src/constants";
 
 export function handleProposalCanceled(event: ProposalCanceled): void {
   _handleProposalCanceled(event.params.proposalId.toString(), event);
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
-  let contract = HOPGovernor.bind(event.address);
-  let quorum = contract.quorum(event.block.number);
+  let quorumVotes = HOPGovernor.bind(event.address).quorum(
+    event.block.number.minus(BIGINT_ONE)
+  );
 
   // FIXME: Prefer to use a single object arg for params
   // e.g.  { proposalId: event.params.proposalId, proposer: event.params.proposer, ...}
@@ -40,7 +42,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
     event.params.startBlock,
     event.params.endBlock,
     event.params.description,
-    quorum,
+    quorumVotes,
     event
   );
 }
@@ -68,12 +70,16 @@ export function handleTimelockChange(event: TimelockChange): void {
 }
 
 export function handleVoteCast(event: VoteCast): void {
+  let proposal = getOrCreateProposal(event.params.proposalId.toString());
+  let quorumVotes = HOPGovernor.bind(event.address).quorum(proposal.startBlock);
+
   _handleVoteCast(
     event.params.proposalId.toString(),
     event.params.voter.toHexString(),
     event.params.weight,
     event.params.reason,
     event.params.support,
+    quorumVotes,
     event
   );
 }

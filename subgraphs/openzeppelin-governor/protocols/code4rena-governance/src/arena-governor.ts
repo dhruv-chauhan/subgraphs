@@ -18,10 +18,11 @@ import {
   _handleProposalQueued,
   _handleVoteCast,
   _handleProposalExtended,
+  getOrCreateProposal,
 } from "../../../src/handlers";
 import { ArenaGovernor } from "../../../generated/ArenaGovernor/ArenaGovernor";
 import { GovernanceFramework } from "../../../generated/schema";
-import { GovernanceFrameworkType } from "../../../src/constants";
+import { BIGINT_ONE, GovernanceFrameworkType } from "../../../src/constants";
 
 // ProposalCanceled(proposalId)
 export function handleProposalCanceled(event: ProposalCanceled): void {
@@ -30,8 +31,9 @@ export function handleProposalCanceled(event: ProposalCanceled): void {
 
 // ProposalCreated(proposalId, proposer, targets, values, signatures, calldatas, startBlock, endBlock, description)
 export function handleProposalCreated(event: ProposalCreated): void {
-  let contract = ArenaGovernor.bind(event.address);
-  let quorum = contract.quorum(event.block.number);
+  let quorumVotes = ArenaGovernor.bind(event.address).quorum(
+    event.block.number.minus(BIGINT_ONE)
+  );
 
   // FIXME: Prefer to use a single object arg for params
   // e.g.  { proposalId: event.params.proposalId, proposer: event.params.proposer, ...}
@@ -46,7 +48,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
     event.params.startBlock,
     event.params.endBlock,
     event.params.description,
-    quorum,
+    quorumVotes,
     event
   );
 }
@@ -84,12 +86,18 @@ export function handleTimelockChange(event: TimelockChange): void {
 
 // VoteCast(account, proposalId, support, weight, reason);
 export function handleVoteCast(event: VoteCast): void {
+  let proposal = getOrCreateProposal(event.params.proposalId.toString());
+  let quorumVotes = ArenaGovernor.bind(event.address).quorum(
+    proposal.startBlock
+  );
+
   _handleVoteCast(
-    event.params.proposalId.toString(),
+    proposal,
     event.params.voter.toHexString(),
     event.params.weight,
     event.params.reason,
     event.params.support,
+    quorumVotes,
     event
   );
 }

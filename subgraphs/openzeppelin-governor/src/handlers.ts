@@ -262,29 +262,30 @@ export function _handleProposalQueued(proposalId: BigInt, eta: BigInt): void {
 }
 
 export function _handleVoteCast(
-  proposalId: string,
+  proposal: Proposal,
   voterAddress: string,
   weight: BigInt,
   reason: string,
   support: i32,
+  quorumVotes: BigInt,
   event: ethereum.Event
 ): void {
-  let voteId = voterAddress.concat("-").concat(proposalId);
+  let voteId = voterAddress.concat("-").concat(proposal.id);
   let vote = new Vote(voteId);
-  vote.proposal = proposalId;
+  vote.proposal = proposal.id;
   vote.voter = voterAddress;
   vote.weight = weight;
   vote.reason = reason;
   vote.block = event.block.number;
   vote.blockTime = event.block.timestamp;
-
   // Retrieve enum string key by value (0 = Against, 1 = For, 2 = Abstain)
   vote.choice = getVoteChoiceByValue(support);
   vote.save();
 
-  let proposal = getOrCreateProposal(proposalId);
+  // On first vote, set state and quorum values
   if (proposal.state == ProposalState.PENDING) {
     proposal.state = ProposalState.ACTIVE;
+    proposal.quorumVotes = quorumVotes;
   }
 
   // Increment respective vote choice counts
