@@ -1,28 +1,28 @@
-specVersion: 0.0.1
+specVersion: 0.0.4
 repository: https://github.com/dhruv-chauhan/subgraphs
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Tornado
+    name: TornadoCash_eth
     network: mainnet
     source:
       address: "0x47CE0C6eD5B0Ce3d3A51fdb1C52DC66a7c3c2936"
       abi: TornadoCash_eth
-      startBlock: 11480275
+      startBlock: 14675128
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.1
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/mappings/tornado.ts
+      file: ./src/mappings/tornadoCash_eth.ts
       entities:
-        - Deposit
-        - Withdraw
+        - PoolDeposit
+        - PoolWithdrawal
       abis:
         - name: TornadoCash_eth
-          file: ./abis/TornadoCash_eth.json
+          file: ./abis/tornadoCash_eth.json
       eventHandlers:
-        - event: Deposit(indexed bytes32, uint32, uint256)
+        - event: Deposit(indexed bytes32,uint32,uint256)
           handler: handleDeposit
-        - event: Withdrawal(address, bytes32, indexed address, uint256)
-          handler: handleWithdraw
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal

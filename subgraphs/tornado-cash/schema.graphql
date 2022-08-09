@@ -1,5 +1,22 @@
+###########################
+##### Pool-Level Data #####
+###########################
 
-type Pool @entity {
+type PoolDeposit @entity {
   " Smart contract address of the pool "
   id: ID!
+
+  commitment: String!
+  leafIndex: BigInt!
+  timestamp: BigInt!
+}
+
+type PoolWithdrawal @entity {
+  " Smart contract address of the pool "
+  id: ID!
+
+  to: String!
+  nullifierHash: Bytes!
+  relayer: String!
+  fee: BigInt!
 }
