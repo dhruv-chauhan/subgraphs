@@ -1,0 +1,5 @@
+
+type Pool @entity {
+  " Smart contract address of the pool "
+  id: ID!
+}
