@@ -2,28 +2,25 @@ import {
   Deposit,
   Withdrawal,
 } from "../../generated/TornadoCash_eth/TornadoCash_eth";
-import { getOrCreatePool, getOrCreateProtocol } from "../common/getters";
-import { log } from "@graphprotocol/graph-ts";
+import {
+  updateFinancials,
+  updatePoolMetrics,
+  updateUsageMetrics,
+} from "../common/metrics";
+import { createDeposit, createWithdrawal } from "./helpers";
 
 export function handleDeposit(event: Deposit): void {
-  // let protocol = getOrCreateProtocol();
-  let pool = getOrCreatePool(event.address.toHexString(), event);
+  createDeposit(event);
 
-  // update tvl, input balance
-  // pool.totalValueLockedUSD =
-  // pool.cumulativeProtocolSideRevenueUSD
-  // pool.cumulativeSupplySideRevenueUSD
-  // pool.cumulativeTotalRevenueUSD
-  // pool.inputTokenBalances
-
-  pool.save();
-
-  // update snapshots
+  updatePoolMetrics(event);
+  updateUsageMetrics(event);
+  updateFinancials(event);
 }
 
 export function handleWithdrawal(event: Withdrawal): void {
-  // let protocol = getOrCreateProtocol();
-  let pool = getOrCreatePool(event.address.toHexString(), event);
+  createWithdrawal(event);
 
-  pool.save();
+  updatePoolMetrics(event);
+  updateUsageMetrics(event);
+  updateFinancials(event);
 }

@@ -1,4 +1,4 @@
-import { Address, ethereum, log, BigInt } from "@graphprotocol/graph-ts";
+import { Address, ethereum, BigInt } from "@graphprotocol/graph-ts";
 import {
   Token,
   UsageMetricsDailySnapshot,
@@ -6,6 +6,8 @@ import {
   UsageMetricsHourlySnapshot,
   Protocol,
   Pool,
+  PoolDailySnapshot,
+  PoolHourlySnapshot,
 } from "../../generated/schema";
 import { fetchTokenSymbol, fetchTokenName, fetchTokenDecimals } from "./tokens";
 import {
@@ -28,101 +30,8 @@ import {
   ETH_SYMBOL,
   ETH_DECIMALS,
 } from "./constants";
-
-export function getOrCreateUsageMetricDailySnapshot(
-  event: ethereum.Event
-): UsageMetricsDailySnapshot {
-  // Number of days since Unix epoch
-  let id = event.block.timestamp.toI32() / SECONDS_PER_DAY;
-  let dayId = id.toString();
-  // Create unique id for the day
-  let usageMetrics = UsageMetricsDailySnapshot.load(dayId);
-
-  if (!usageMetrics) {
-    usageMetrics = new UsageMetricsDailySnapshot(dayId);
-    usageMetrics.protocol = FACTORY_ADDRESS;
-
-    usageMetrics.dailyActiveUsers = INT_ZERO;
-    usageMetrics.cumulativeUniqueUsers = INT_ZERO;
-    usageMetrics.dailyTransactionCount = INT_ZERO;
-    // usageMetrics.dailyDepositCount = INT_ZERO;
-    // usageMetrics.dailyWithdrawCount = INT_ZERO;
-    // usageMetrics.dailySwapCount = INT_ZERO;
-
-    usageMetrics.blockNumber = event.block.number;
-    usageMetrics.timestamp = event.block.timestamp;
-
-    usageMetrics.save();
-  }
-
-  return usageMetrics;
-}
-export function getOrCreateUsageMetricHourlySnapshot(
-  event: ethereum.Event
-): UsageMetricsHourlySnapshot {
-  // Number of days since Unix epoch
-  let hour = event.block.timestamp.toI32() / SECONDS_PER_HOUR;
-  let hourId = hour.toString();
-
-  // Create unique id for the day
-  let usageMetrics = UsageMetricsHourlySnapshot.load(hourId);
-
-  if (!usageMetrics) {
-    usageMetrics = new UsageMetricsHourlySnapshot(hourId);
-    usageMetrics.protocol = FACTORY_ADDRESS;
-
-    usageMetrics.hourlyActiveUsers = INT_ZERO;
-    usageMetrics.cumulativeUniqueUsers = INT_ZERO;
-    usageMetrics.hourlyTransactionCount = INT_ZERO;
-    // usageMetrics.hourlyDepositCount = INT_ZERO;
-    // usageMetrics.hourlyWithdrawCount = INT_ZERO;
-    // usageMetrics.hourlySwapCount = INT_ZERO;
-
-    usageMetrics.blockNumber = event.block.number;
-    usageMetrics.timestamp = event.block.timestamp;
-
-    usageMetrics.save();
-  }
-
-  return usageMetrics;
-}
-
-export function getOrCreateFinancialsDailySnapshot(
-  event: ethereum.Event
-): FinancialsDailySnapshot {
-  // Number of days since Unix epoch
-  let dayID = event.block.timestamp.toI32() / SECONDS_PER_DAY;
-  let id = dayID.toString();
-
-  let financialMetrics = FinancialsDailySnapshot.load(id);
-
-  if (!financialMetrics) {
-    financialMetrics = new FinancialsDailySnapshot(id);
-    financialMetrics.protocol = FACTORY_ADDRESS;
-
-    financialMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
-    // financialMetrics.dailyVolumeUSD = BIGDECIMAL_ZERO;
-    // financialMetrics.cumulativeVolumeUSD = BIGDECIMAL_ZERO;
-
-    financialMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
-    financialMetrics.dailySupplySideRevenueUSD = BIGDECIMAL_ZERO;
-    financialMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
-    financialMetrics.dailyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
-    financialMetrics.dailyTotalRevenueUSD = BIGDECIMAL_ZERO;
-    financialMetrics.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
-
-    financialMetrics.blockNumber = event.block.number;
-    financialMetrics.timestamp = event.block.timestamp;
-
-    financialMetrics.save();
-  }
-
-  return financialMetrics;
-}
-
 import { TornadoCash_eth } from "../../generated/TornadoCash_eth/TornadoCash_eth";
 import { TornadoCash_erc20 } from "../../generated/TornadoCash_eth/TornadoCash_erc20";
-import { exponentToBigDecimal } from "./utils/numbers";
 import { getUsdPricePerToken } from "../prices";
 
 export function getOrCreateProtocol(): Protocol {
@@ -199,14 +108,14 @@ export function getOrCreatePool(
     if (!token_call.reverted) {
       let token = getOrCreateToken(token_call.value, event.block.number);
       pool.inputTokens = [token.id];
-      pool.outputToken = token.id;
 
       let denomination_call = contractERC20.try_denomination();
       if (!denomination_call.reverted) {
-        let denomination = denomination_call.value.divDecimal(
-          exponentToBigDecimal(token.decimals)
+        let denomination = denomination_call.value.div(
+          new BigInt(10 ** token.decimals)
         );
 
+        pool.denomination = denomination;
         pool.name = `TornadoCash ${denomination}${token.symbol}`;
         pool.symbol = `${denomination}${token.symbol}`;
       }
@@ -216,15 +125,15 @@ export function getOrCreatePool(
         event.block.number
       );
       pool.inputTokens = [token.id];
-      pool.outputToken = token.id;
 
       let contractETH = TornadoCash_eth.bind(Address.fromString(poolAddress));
       let denomination_call = contractETH.try_denomination();
       if (!denomination_call.reverted) {
-        let denomination = denomination_call.value.divDecimal(
-          exponentToBigDecimal(token.decimals)
+        let denomination = denomination_call.value.div(
+          new BigInt(10 ** token.decimals)
         );
 
+        pool.denomination = denomination;
         pool.name = `TornadoCash ${denomination}${token.symbol}`;
         pool.symbol = `${denomination}${token.symbol}`;
       }
@@ -242,4 +151,147 @@ export function getOrCreatePool(
   }
 
   return pool;
+}
+
+export function getOrCreatePoolDailySnapshot(
+  event: ethereum.Event
+): PoolDailySnapshot {
+  let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
+  let dayId = day.toString();
+  let poolMetrics = PoolDailySnapshot.load(
+    event.address.toHexString().concat("-").concat(dayId)
+  );
+
+  if (!poolMetrics) {
+    poolMetrics = new PoolDailySnapshot(
+      event.address.toHexString().concat("-").concat(dayId)
+    );
+    poolMetrics.protocol = FACTORY_ADDRESS;
+    poolMetrics.pool = event.address.toHexString();
+    poolMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.dailySupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.dailyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeTotalRevenueUSD;
+    poolMetrics.dailyTotalRevenueUSD;
+    poolMetrics.inputTokenBalances = [BIGINT_ZERO];
+
+    poolMetrics.blockNumber = event.block.number;
+    poolMetrics.timestamp = event.block.timestamp;
+
+    poolMetrics.save();
+  }
+
+  return poolMetrics;
+}
+
+export function getOrCreatePoolHourlySnapshot(
+  event: ethereum.Event
+): PoolHourlySnapshot {
+  let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
+  let dayId = day.toString();
+  let poolMetrics = PoolHourlySnapshot.load(
+    event.address.toHexString().concat("-").concat(dayId)
+  );
+
+  if (!poolMetrics) {
+    poolMetrics = new PoolHourlySnapshot(
+      event.address.toHexString().concat("-").concat(dayId)
+    );
+    poolMetrics.protocol = FACTORY_ADDRESS;
+    poolMetrics.pool = event.address.toHexString();
+    poolMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.hourlySupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.hourlyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.cumulativeTotalRevenueUSD;
+    poolMetrics.hourlyTotalRevenueUSD;
+    poolMetrics.inputTokenBalances = [BIGINT_ZERO];
+
+    poolMetrics.blockNumber = event.block.number;
+    poolMetrics.timestamp = event.block.timestamp;
+
+    poolMetrics.save();
+  }
+
+  return poolMetrics;
+}
+
+export function getOrCreateUsageMetricDailySnapshot(
+  event: ethereum.Event
+): UsageMetricsDailySnapshot {
+  // Number of days since Unix epoch
+  let id = event.block.timestamp.toI32() / SECONDS_PER_DAY;
+  let dayId = id.toString();
+  // Create unique id for the day
+  let usageMetrics = UsageMetricsDailySnapshot.load(dayId);
+
+  if (!usageMetrics) {
+    usageMetrics = new UsageMetricsDailySnapshot(dayId);
+    usageMetrics.protocol = FACTORY_ADDRESS;
+    usageMetrics.dailyActiveUsers = INT_ZERO;
+    usageMetrics.cumulativeUniqueUsers = INT_ZERO;
+    usageMetrics.dailyTransactionCount = INT_ZERO;
+    usageMetrics.blockNumber = event.block.number;
+    usageMetrics.timestamp = event.block.timestamp;
+
+    usageMetrics.save();
+  }
+
+  return usageMetrics;
+}
+
+export function getOrCreateUsageMetricHourlySnapshot(
+  event: ethereum.Event
+): UsageMetricsHourlySnapshot {
+  // Number of days since Unix epoch
+  let hour = event.block.timestamp.toI32() / SECONDS_PER_HOUR;
+  let hourId = hour.toString();
+
+  // Create unique id for the day
+  let usageMetrics = UsageMetricsHourlySnapshot.load(hourId);
+
+  if (!usageMetrics) {
+    usageMetrics = new UsageMetricsHourlySnapshot(hourId);
+    usageMetrics.protocol = FACTORY_ADDRESS;
+    usageMetrics.hourlyActiveUsers = INT_ZERO;
+    usageMetrics.cumulativeUniqueUsers = INT_ZERO;
+    usageMetrics.hourlyTransactionCount = INT_ZERO;
+    usageMetrics.blockNumber = event.block.number;
+    usageMetrics.timestamp = event.block.timestamp;
+
+    usageMetrics.save();
+  }
+
+  return usageMetrics;
+}
+
+export function getOrCreateFinancialsDailySnapshot(
+  event: ethereum.Event
+): FinancialsDailySnapshot {
+  // Number of days since Unix epoch
+  let dayID = event.block.timestamp.toI32() / SECONDS_PER_DAY;
+  let id = dayID.toString();
+
+  let financialMetrics = FinancialsDailySnapshot.load(id);
+
+  if (!financialMetrics) {
+    financialMetrics = new FinancialsDailySnapshot(id);
+    financialMetrics.protocol = FACTORY_ADDRESS;
+    financialMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
+    financialMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.dailySupplySideRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.dailyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.dailyTotalRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
+    financialMetrics.blockNumber = event.block.number;
+    financialMetrics.timestamp = event.block.timestamp;
+
+    financialMetrics.save();
+  }
+
+  return financialMetrics;
 }

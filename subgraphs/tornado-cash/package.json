@@ -7,8 +7,8 @@
     "deploy": "graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ dhruv-chauhan/tornado-dev-two --access-token 805b3b60f4104e0788d4b79bb0e6cb9a"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.29.0",
-    "@graphprotocol/graph-ts": "^0.27.0"
+    "@graphprotocol/graph-cli": "0.26.0",
+    "@graphprotocol/graph-ts": "0.24.1"
   },
   "devDependencies": {
     "typescript": "^4.7.4"
