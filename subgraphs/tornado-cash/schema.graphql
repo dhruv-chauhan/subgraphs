@@ -260,7 +260,8 @@ type Pool @entity {
   inputTokens: [Token!]!
 
   " Fixed size of position "
-  denomination: BigInt!
+  _denomination: BigInt!
+  _fee: BigDecimal!
 
   " Token that is minted to track ownership of position in protocol "
   outputToken: Token

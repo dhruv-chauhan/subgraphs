@@ -24,3 +24,6 @@ export function handleWithdrawal(event: Withdrawal): void {
   updateUsageMetrics(event);
   updateFinancials(event);
 }
+
+// fee manager proxy: 0x5f6c97C6AD7bdd0AE7E0Dd4ca33A4ED3fDabD4D7
+// update pool._fee

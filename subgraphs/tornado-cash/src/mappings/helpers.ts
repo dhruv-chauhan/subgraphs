@@ -1,8 +1,13 @@
 import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Protocol } from "../../generated/schema";
 import { getOrCreatePool, getOrCreateToken } from "../common/getters";
 import { bigIntToBigDecimal } from "../common/utils/numbers";
+import {
+  Deposit,
+  Withdrawal,
+} from "../../generated/TornadoCash_eth/TornadoCash_eth";
 
-export function createDeposit(event: ethereum.Event): void {
+export function createDeposit(event: Deposit): void {
   // let protocol = getOrCreateProtocol();
   let pool = getOrCreatePool(event.address.toHexString(), event);
   let inputToken = getOrCreateToken(
@@ -11,19 +16,16 @@ export function createDeposit(event: ethereum.Event): void {
   );
 
   pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(
-    bigIntToBigDecimal(pool.denomination).times(inputToken.lastPriceUSD!)
+    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
   );
-  // pool.cumulativeProtocolSideRevenueUSD
-  // pool.cumulativeSupplySideRevenueUSD
-  // pool.cumulativeTotalRevenueUSD
   pool.inputTokenBalances[0] = pool.inputTokenBalances[0].plus(
-    pool.denomination
+    pool._denomination
   );
 
   pool.save();
 }
 
-export function createWithdrawal(event: ethereum.Event): void {
+export function createWithdrawal(event: Withdrawal): void {
   // let protocol = getOrCreateProtocol();
   let pool = getOrCreatePool(event.address.toHexString(), event);
   let inputToken = getOrCreateToken(
@@ -32,13 +34,26 @@ export function createWithdrawal(event: ethereum.Event): void {
   );
 
   pool.totalValueLockedUSD = pool.totalValueLockedUSD.minus(
-    bigIntToBigDecimal(pool.denomination).times(inputToken.lastPriceUSD!)
+    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
   );
-  // pool.cumulativeProtocolSideRevenueUSD
-  // pool.cumulativeSupplySideRevenueUSD
-  // pool.cumulativeTotalRevenueUSD
+  pool.cumulativeProtocolSideRevenueUSD =
+    pool.cumulativeProtocolSideRevenueUSD.minus(
+      pool._fee.times(bigIntToBigDecimal(pool._denomination))
+    );
+
+  // txn fee?
+  pool.cumulativeSupplySideRevenueUSD =
+    pool.cumulativeSupplySideRevenueUSD.plus(
+      bigIntToBigDecimal(event.params.fee).minus(pool._fee)
+    );
+  pool.cumulativeTotalRevenueUSD = pool.cumulativeTotalRevenueUSD.plus(
+    pool.cumulativeProtocolSideRevenueUSD.plus(
+      pool.cumulativeSupplySideRevenueUSD
+    )
+  );
+
   pool.inputTokenBalances[0] = pool.inputTokenBalances[0].minus(
-    pool.denomination
+    pool._denomination
   );
 
   pool.save();

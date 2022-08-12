@@ -115,7 +115,7 @@ export function getOrCreatePool(
           new BigInt(10 ** token.decimals)
         );
 
-        pool.denomination = denomination;
+        pool._denomination = denomination;
         pool.name = `TornadoCash ${denomination}${token.symbol}`;
         pool.symbol = `${denomination}${token.symbol}`;
       }
@@ -133,12 +133,13 @@ export function getOrCreatePool(
           new BigInt(10 ** token.decimals)
         );
 
-        pool.denomination = denomination;
+        pool._denomination = denomination;
         pool.name = `TornadoCash ${denomination}${token.symbol}`;
         pool.symbol = `${denomination}${token.symbol}`;
       }
     }
 
+    pool._fee = BIGDECIMAL_ZERO;
     pool.createdTimestamp = event.block.timestamp;
     pool.createdBlockNumber = event.block.number;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
