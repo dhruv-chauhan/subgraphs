@@ -3,7 +3,7 @@ import { Factory } from "../../../../../generated/Factory/Factory";
 import {
   BIGINT_ZERO,
   FeeSwitch,
-  MINIMUM_LIQUIDITY_ONE_HUNDRED_THOUSAND,
+  MINIMUM_LIQUIDITY_FIVE_THOUSAND,
   MINIMUM_LIQUIDITY_THREE_THOUSAND,
   Network,
   PROTOCOL_SCHEMA_VERSION,
@@ -78,7 +78,7 @@ export class SolarbeamMoonriverConfigurations implements Configurations {
     return toLowerCase("0x98878b06940ae243284ca214f92bb71a2b032b8a"); // wMOVR
   }
   getRewardToken(): string {
-    return toLowerCase("0x6bd193ee6d2104f14f94e2ca6efefae561a4334b");
+    return toLowerCase("0x6bd193ee6d2104f14f94e2ca6efefae561a4334b"); // SOLARBEAM
   }
   getWhitelistTokens(): string[] {
     return toLowerCaseList([
@@ -106,7 +106,10 @@ export class SolarbeamMoonriverConfigurations implements Configurations {
   getUntrackedTokens(): string[] {
     return [];
   }
-  getMinimumLiquidityThreshold(): BigDecimal {
+  getMinimumLiquidityThresholdTrackVolume(): BigDecimal {
+    return MINIMUM_LIQUIDITY_FIVE_THOUSAND;
+  }
+  getMinimumLiquidityThresholdTrackPrice(): BigDecimal {
     return MINIMUM_LIQUIDITY_THREE_THOUSAND;
   }
 }

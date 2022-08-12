@@ -1,11 +1,4 @@
-// import { log } from '@graphprotocol/graph-ts'
-import {
-  BigInt,
-  Address,
-  ethereum,
-  log,
-  dataSource,
-} from "@graphprotocol/graph-ts";
+import { BigInt, Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   LiquidityPool,
   Token,
@@ -26,6 +19,7 @@ import {
 } from "./getters";
 import { NetworkConfigs } from "../../configurations/configure";
 import {
+  BIGDECIMAL_FIFTY,
   BIGDECIMAL_NEG_ONE,
   BIGDECIMAL_ONE,
   BIGDECIMAL_TWO,
@@ -75,16 +69,8 @@ export function createLiquidityPool(
   pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
   pool.cumulativeVolumeUSD = BIGDECIMAL_ZERO;
   pool.inputTokenBalances = [BIGINT_ZERO, BIGINT_ZERO];
-  pool.inputTokenWeights = [
-    BIGDECIMAL_ONE.div(BIGDECIMAL_TWO),
-    BIGDECIMAL_ONE.div(BIGDECIMAL_TWO),
-  ];
+  pool.inputTokenWeights = [BIGDECIMAL_FIFTY, BIGDECIMAL_FIFTY];
   pool.outputTokenSupply = BIGINT_ZERO;
-  pool.outputTokenPriceUSD = BIGDECIMAL_ZERO;
-  pool.rewardTokens = [NetworkConfigs.getRewardToken()];
-  pool.stakedOutputTokenAmount = BIGINT_ZERO;
-  pool.rewardTokenEmissionsAmount = [BIGINT_ZERO, BIGINT_ZERO];
-  pool.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO, BIGDECIMAL_ZERO];
   pool.fees = createPoolFees(poolAddress, fees);
   pool.createdTimestamp = event.block.timestamp;
   pool.createdBlockNumber = event.block.number;
@@ -441,10 +427,10 @@ export function createSwapHandleVolumeAndFees(
   // get amount that should be tracked only - div 2 because cant count both input and output as volume
   let trackedAmountUSD = getTrackedVolumeUSD(
     poolAmounts,
-    amount0Abs,
-    token0 as Token,
-    amount1Abs,
-    token1 as Token
+    amount0USD,
+    token0,
+    amount1USD,
+    token1
   );
   updateVolumeAndFees(
     event,

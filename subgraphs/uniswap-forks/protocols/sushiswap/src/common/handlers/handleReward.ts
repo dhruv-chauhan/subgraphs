@@ -13,14 +13,16 @@ import {
   INT_ZERO,
   MasterChef,
   RECENT_BLOCK_THRESHOLD,
-  UsageType,
 } from "../../../../../src/common/constants";
 import {
   getOrCreateRewardToken,
   getOrCreateToken,
 } from "../../../../../src/common/getters";
 import { getRewardsPerDay } from "../../../../../src/common/rewards";
-import { getOrCreateMasterChef } from "../helpers";
+import {
+  getOrCreateMasterChef,
+  getOrCreateMasterChefStakingPool,
+} from "../../../../../src/common/masterchef/helpers";
 import {
   convertTokenToDecimal,
   roundToWholeNumber,
@@ -32,8 +34,7 @@ import {
 export function handleReward(
   event: ethereum.Event,
   pid: BigInt,
-  amount: BigInt,
-  usageType: string
+  amount: BigInt
 ): void {
   let poolContract = MasterChefSushiswap.bind(event.address);
   let masterChefPool = getOrCreateMasterChefStakingPool(
@@ -66,18 +67,18 @@ export function handleReward(
   let pool = LiquidityPool.load(masterChefPool.poolAddress!);
   if (!pool) {
     return;
-  } else {
-    pool.rewardTokens = [
-      getOrCreateRewardToken(NetworkConfigs.getRewardToken()).id,
-    ];
   }
 
+  let rewardToken = getOrCreateToken(NetworkConfigs.getRewardToken());
+  pool.rewardTokens = [
+    getOrCreateRewardToken(NetworkConfigs.getRewardToken()).id,
+  ];
+
   // Update staked amounts
-  if (usageType == UsageType.DEPOSIT) {
-    pool.stakedOutputTokenAmount = pool.stakedOutputTokenAmount!.plus(amount);
-  } else {
-    pool.stakedOutputTokenAmount = pool.stakedOutputTokenAmount!.minus(amount);
-  }
+  // Positive for deposits, negative for withdraws
+  pool.stakedOutputTokenAmount = !pool.stakedOutputTokenAmount
+    ? amount
+    : pool.stakedOutputTokenAmount!.plus(amount);
 
   // Return if you have calculated rewards recently - Performance Boost
   if (
@@ -133,12 +134,10 @@ export function handleReward(
   masterChefV2.lastUpdatedRewardRate = event.block.number;
 
   // Calculate Reward Emission per Block
-  let poolRewardTokenRate = masterChef.adjustedRewardTokenRate
+  let poolRewardTokenRate = masterChefPool.multiplier
+    .times(masterChef.adjustedRewardTokenRate)
     .times(masterChefPool.poolAllocPoint)
     .div(masterChef.totalAllocPoint);
-
-  let nativeToken = getOrCreateToken(NetworkConfigs.getReferenceToken());
-  let rewardToken = getOrCreateToken(NetworkConfigs.getRewardToken());
 
   // Based on the emissions rate for the pool, calculate the rewards per day for the pool.
   let rewardTokenRateBigDecimal = new BigDecimal(poolRewardTokenRate);
@@ -165,33 +164,5 @@ export function handleReward(
   masterChef.save();
   masterChefV2.save();
   rewardToken.save();
-  nativeToken.save();
   pool.save();
-}
-
-// Create a MasterChefStaking pool using the MasterChef pid for id.
-function getOrCreateMasterChefStakingPool(
-  event: ethereum.Event,
-  masterChefType: string,
-  pid: BigInt
-): _MasterChefStakingPool {
-  let masterChefPool = _MasterChefStakingPool.load(
-    masterChefType + "-" + pid.toString()
-  );
-
-  // Create entity to track masterchef pool mappings
-  if (!masterChefPool) {
-    masterChefPool = new _MasterChefStakingPool(
-      masterChefType + "-" + pid.toString()
-    );
-
-    masterChefPool.multiplier = BIGINT_ONE;
-    masterChefPool.poolAllocPoint = BIGINT_ZERO;
-    masterChefPool.lastRewardBlock = event.block.number;
-    log.warning("MASTERCHEF POOL CREATED: " + pid.toString(), []);
-
-    masterChefPool.save();
-  }
-
-  return masterChefPool;
 }
