@@ -1,8 +1,9 @@
 /* eslint-disable prefer-const */
-import { ERC20 } from "../../generated/TornadoCash_eth/ERC20";
-import { ERC20SymbolBytes } from "../../generated/TornadoCash_eth/ERC20SymbolBytes";
-import { ERC20NameBytes } from "../../generated/TornadoCash_eth/ERC20NameBytes";
 import { Address } from "@graphprotocol/graph-ts";
+
+import { ERC20 } from "../../generated/TornadoCashETH/ERC20";
+import { ERC20SymbolBytes } from "../../generated/TornadoCashETH/ERC20SymbolBytes";
+import { ERC20NameBytes } from "../../generated/TornadoCashETH/ERC20NameBytes";
 
 export const INVALID_TOKEN_DECIMALS = 0;
 export const UNKNOWN_TOKEN_VALUE = "unknown";

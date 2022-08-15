@@ -5,8 +5,8 @@ import * as ARBITRUM_ONE from "../config/arbitrumOne";
 import * as POLYGON from "../config/polygon";
 
 import { Address, BigDecimal, BigInt, TypedMap } from "@graphprotocol/graph-ts";
-import { UniswapPair__getReservesResult } from "../../../generated/TornadoCash_eth/UniswapPair";
-import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCash_eth/SushiSwapPair";
+import { UniswapPair__getReservesResult } from "../../../generated/TornadoCashETH/UniswapPair";
+import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCashETH/SushiSwapPair";
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// COMMON ////////////////////////////////

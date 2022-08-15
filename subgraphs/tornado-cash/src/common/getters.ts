@@ -1,14 +1,5 @@
 import { Address, ethereum, BigInt } from "@graphprotocol/graph-ts";
-import {
-  Token,
-  UsageMetricsDailySnapshot,
-  FinancialsDailySnapshot,
-  UsageMetricsHourlySnapshot,
-  Protocol,
-  Pool,
-  PoolDailySnapshot,
-  PoolHourlySnapshot,
-} from "../../generated/schema";
+
 import { fetchTokenSymbol, fetchTokenName, fetchTokenDecimals } from "./tokens";
 import {
   BIGDECIMAL_ZERO,
@@ -29,10 +20,26 @@ import {
   ETH_NAME,
   ETH_SYMBOL,
   ETH_DECIMALS,
+  vTORN_ADDRESS,
+  vTORN_NAME,
+  vTORN_SYMBOL,
+  vTORN_DECIMALS,
 } from "./constants";
-import { TornadoCash_eth } from "../../generated/TornadoCash_eth/TornadoCash_eth";
-import { TornadoCash_erc20 } from "../../generated/TornadoCash_eth/TornadoCash_erc20";
 import { getUsdPricePerToken } from "../prices";
+
+import { TornadoCashETH } from "../../generated/TornadoCashETH/TornadoCashETH";
+import { TornadoCashERC20 } from "../../generated/TornadoCashETH/TornadoCashERC20";
+import {
+  Protocol,
+  Pool,
+  PoolDailySnapshot,
+  PoolHourlySnapshot,
+  Token,
+  RewardToken,
+  UsageMetricsHourlySnapshot,
+  UsageMetricsDailySnapshot,
+  FinancialsDailySnapshot,
+} from "../../generated/schema";
 
 export function getOrCreateProtocol(): Protocol {
   let protocol = Protocol.load(FACTORY_ADDRESS);
@@ -63,16 +70,19 @@ export function getOrCreateToken(
   tokenAddress: Address,
   blockNumber: BigInt
 ): Token {
-  const tokenId = tokenAddress.toHexString();
-  let token = Token.load(tokenId);
+  let token = Token.load(tokenAddress.toHexString());
 
   if (!token) {
-    token = new Token(tokenId);
+    token = new Token(tokenAddress.toHexString());
 
     if (tokenAddress == Address.fromString(ETH_ADDRESS)) {
       token.name = ETH_NAME;
       token.symbol = ETH_SYMBOL;
       token.decimals = ETH_DECIMALS;
+    } else if (tokenAddress == Address.fromString(vTORN_ADDRESS)) {
+      token.name = vTORN_NAME;
+      token.symbol = vTORN_SYMBOL;
+      token.decimals = vTORN_DECIMALS;
     } else {
       token.name = fetchTokenName(tokenAddress);
       token.symbol = fetchTokenSymbol(tokenAddress);
@@ -92,6 +102,27 @@ export function getOrCreateToken(
   return token;
 }
 
+export function getOrCreateRewardToken(
+  address: Address,
+  blockNumber: BigInt
+): RewardToken {
+  let rewardToken = RewardToken.load(address.toHexString());
+
+  if (!rewardToken) {
+    let token = getOrCreateToken(address, blockNumber);
+
+    rewardToken = new RewardToken(address.toHexString());
+
+    rewardToken.token = token.id;
+    rewardToken.type = RewardTokenType.DEPOSIT;
+    rewardToken._lastPriceUSD = BIGDECIMAL_ZERO;
+
+    rewardToken.save();
+  }
+
+  return rewardToken;
+}
+
 export function getOrCreatePool(
   poolAddress: string,
   event: ethereum.Event
@@ -103,7 +134,7 @@ export function getOrCreatePool(
 
     pool.protocol = getOrCreateProtocol().id;
 
-    let contractERC20 = TornadoCash_erc20.bind(Address.fromString(poolAddress));
+    let contractERC20 = TornadoCashERC20.bind(Address.fromString(poolAddress));
     let token_call = contractERC20.try_token();
     if (!token_call.reverted) {
       let token = getOrCreateToken(token_call.value, event.block.number);
@@ -112,7 +143,7 @@ export function getOrCreatePool(
       let denomination_call = contractERC20.try_denomination();
       if (!denomination_call.reverted) {
         let denomination = denomination_call.value.div(
-          new BigInt(10 ** token.decimals)
+          BigInt.fromI32(10).pow(token.decimals as u8)
         );
 
         pool._denomination = denomination;
@@ -126,11 +157,11 @@ export function getOrCreatePool(
       );
       pool.inputTokens = [token.id];
 
-      let contractETH = TornadoCash_eth.bind(Address.fromString(poolAddress));
+      let contractETH = TornadoCashETH.bind(Address.fromString(poolAddress));
       let denomination_call = contractETH.try_denomination();
       if (!denomination_call.reverted) {
         let denomination = denomination_call.value.div(
-          new BigInt(10 ** token.decimals)
+          BigInt.fromI32(10).pow(token.decimals as u8)
         );
 
         pool._denomination = denomination;
@@ -139,14 +170,22 @@ export function getOrCreatePool(
       }
     }
 
-    pool._fee = BIGDECIMAL_ZERO;
-    pool.createdTimestamp = event.block.timestamp;
-    pool.createdBlockNumber = event.block.number;
+    pool.rewardTokens = [
+      getOrCreateRewardToken(
+        Address.fromString(vTORN_ADDRESS),
+        event.block.number
+      ).id,
+    ];
+
+    pool._fee = BIGINT_ZERO;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
     pool.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
     pool.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
     pool.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
     pool.inputTokenBalances = [BIGINT_ZERO];
+
+    pool.createdTimestamp = event.block.timestamp;
+    pool.createdBlockNumber = event.block.number;
 
     pool.save();
   }

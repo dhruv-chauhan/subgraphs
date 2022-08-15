@@ -290,7 +290,7 @@ contract Tornado is MerkleTreeWithHistory, ReentrancyGuard {
   }
 }
 
-// File: contracts/ETHTornado.sol
+// File: contracts/ERC20Tornado.sol
 
 // https://tornado.cash
 /*
@@ -306,77 +306,62 @@ contract Tornado is MerkleTreeWithHistory, ReentrancyGuard {
 pragma solidity ^0.5.8;
 
 
-contract ETHTornado is Tornado {
+contract TornadoCash_erc20 is Tornado {
+  address public token;
+
   constructor(
     IVerifier _verifier,
     uint256 _denomination,
     uint32 _merkleTreeHeight,
-    address _operator
+    address _operator,
+    address _token
   ) Tornado(_verifier, _denomination, _merkleTreeHeight, _operator) public {
+    token = _token;
   }
 
   function _processDeposit() internal {
-    require(msg.value == denomination, "Please send `mixDenomination` ETH along with transaction");
+    require(msg.value == 0, "ETH value is supposed to be 0 for ERC20 instance");
+    _safeErc20TransferFrom(msg.sender, address(this), denomination);
   }
 
   function _processWithdraw(address payable _recipient, address payable _relayer, uint256 _fee, uint256 _refund) internal {
-    // sanity checks
-    require(msg.value == 0, "Message value is supposed to be zero for ETH instance");
-    require(_refund == 0, "Refund value is supposed to be zero for ETH instance");
+    require(msg.value == _refund, "Incorrect refund amount received by the contract");
 
-    (bool success, ) = _recipient.call.value(denomination - _fee)("");
-    require(success, "payment to _recipient did not go thru");
+    _safeErc20Transfer(_recipient, denomination - _fee);
     if (_fee > 0) {
-      (success, ) = _relayer.call.value(_fee)("");
-      require(success, "payment to _relayer did not go thru");
-    }
-  }
-}
-
-// File: contracts/MigratableETHTornado.sol
-
-pragma solidity ^0.5.8;
-
-
-contract TornadoCash_Eth_01 is ETHTornado {
-  bool public isMigrated = false;
-
-  constructor(
-    IVerifier _verifier,
-    uint256 _denomination,
-    uint32 _merkleTreeHeight,
-    address _operator
-  ) ETHTornado(_verifier, _denomination, _merkleTreeHeight, _operator) public {
-  }
-
-  /**
-    @dev Migrate state from old v1 tornado.cash instance to this contract.
-    @dev only applies to eth 0.1 deposits
-    @param _commitments deposited commitments from previous contract
-    @param _nullifierHashes spent nullifiers from previous contract
-  */
-  function migrateState(bytes32[] calldata _commitments, bytes32[] calldata _nullifierHashes) external onlyOperator {
-    require(!isMigrated, "Migration is disabled");
-    for (uint32 i = 0; i < _commitments.length; i++) {
-      commitments[_commitments[i]] = true;
-      emit Deposit(_commitments[i], nextIndex + i, block.timestamp);
+      _safeErc20Transfer(_relayer, _fee);
     }
 
-    nextIndex += uint32(_commitments.length);
-
-    for (uint256 i = 0; i < _nullifierHashes.length; i++) {
-      nullifierHashes[_nullifierHashes[i]] = true;
-      emit Withdrawal(address(0), _nullifierHashes[i], address(0), 0);
+    if (_refund > 0) {
+      (bool success, ) = _recipient.call.value(_refund)("");
+      if (!success) {
+        // let's return _refund back to the relayer
+        _relayer.transfer(_refund);
+      }
     }
   }
 
-  function initializeTreeForMigration(bytes32[] calldata _filledSubtrees, bytes32 _root) external onlyOperator {
-    require(!isMigrated, "already migrated");
-    filledSubtrees = _filledSubtrees;
-    roots[0] = _root;
+  function _safeErc20TransferFrom(address _from, address _to, uint256 _amount) internal {
+    (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd /* transferFrom */, _from, _to, _amount));
+    require(success, "not enough allowed tokens");
+
+    // if contract returns some data lets make sure that is `true` according to standard
+    if (data.length > 0) {
+      require(data.length == 32, "data length should be either 0 or 32 bytes");
+      success = abi.decode(data, (bool));
+      require(success, "not enough allowed tokens. Token returns false.");
+    }
   }
 
-  function finishMigration() external payable onlyOperator {
-    isMigrated = true;
+  function _safeErc20Transfer(address _to, uint256 _amount) internal {
+    (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb /* transfer */, _to, _amount));
+    require(success, "not enough tokens");
+
+    // if contract returns some data lets make sure that is `true` according to standard
+    if (data.length > 0) {
+      require(data.length == 32, "data length should be either 0 or 32 bytes");
+      success = abi.decode(data, (bool));
+      require(success, "not enough tokens. Token returns false.");
+    }
   }
 }

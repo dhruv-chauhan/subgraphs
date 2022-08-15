@@ -5,8 +5,8 @@ import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   SushiSwapPair__getReservesResult,
   SushiSwapPair as SushiSwapPairContract,
-} from "../../../generated/TornadoCash_eth/SushiSwapPair";
-import { SushiSwapRouter as SushiSwapRouterContract } from "../../../generated/TornadoCash_eth/SushiSwapRouter";
+} from "../../../generated/TornadoCashETH/SushiSwapPair";
+import { SushiSwapRouter as SushiSwapRouterContract } from "../../../generated/TornadoCashETH/SushiSwapRouter";
 
 export function isLpToken(tokenAddress: Address, network: string): bool {
   if (

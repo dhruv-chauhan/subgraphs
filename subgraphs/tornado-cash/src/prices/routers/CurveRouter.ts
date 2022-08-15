@@ -8,8 +8,8 @@ import * as utils from "../common/utils";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import { getPriceUsdc as getPriceUsdcSushi } from "./SushiSwapRouter";
-import { CurveRegistry as CurveRegistryContract } from "../../../generated/TornadoCash_eth/CurveRegistry";
-import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/TornadoCash_eth/CurvePoolRegistry";
+import { CurveRegistry as CurveRegistryContract } from "../../../generated/TornadoCashETH/CurveRegistry";
+import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/TornadoCashETH/CurvePoolRegistry";
 
 export function getCurvePriceUsdc(
   curveLpTokenAddress: Address,

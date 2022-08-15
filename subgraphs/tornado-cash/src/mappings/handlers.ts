@@ -1,13 +1,23 @@
 import {
-  Deposit,
-  Withdrawal,
-} from "../../generated/TornadoCash_eth/TornadoCash_eth";
+  createDeposit,
+  createWithdrawal,
+  createFeeUpdated,
+  createRateChanged,
+  createRewardSwap,
+} from "./helpers";
 import {
   updateFinancials,
   updatePoolMetrics,
   updateUsageMetrics,
 } from "../common/metrics";
-import { createDeposit, createWithdrawal } from "./helpers";
+
+import {
+  Deposit,
+  Withdrawal,
+} from "../../generated/TornadoCashETH/TornadoCashETH";
+import { FeeUpdated } from "../../generated/TornadoCashFeeManager/TornadoCashFeeManager";
+import { RateChanged } from "../../generated/TornadoCashMiner/TornadoCashMiner";
+import { Swap } from "../../generated/TornadoCashRewardSwap/TornadoCashRewardSwap";
 
 export function handleDeposit(event: Deposit): void {
   createDeposit(event);
@@ -25,5 +35,21 @@ export function handleWithdrawal(event: Withdrawal): void {
   updateFinancials(event);
 }
 
-// fee manager proxy: 0x5f6c97C6AD7bdd0AE7E0Dd4ca33A4ED3fDabD4D7
-// update pool._fee
+export function handleFeeUpdated(event: FeeUpdated): void {
+  createFeeUpdated(event);
+
+  updatePoolMetrics(event);
+  updateFinancials(event);
+}
+
+export function handleRateChanged(event: RateChanged): void {
+  createRateChanged(event);
+
+  updatePoolMetrics(event);
+}
+
+export function handleRewardSwap(event: Swap): void {
+  createRewardSwap(event);
+
+  updatePoolMetrics(event);
+}

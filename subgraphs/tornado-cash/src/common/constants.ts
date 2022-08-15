@@ -175,8 +175,8 @@ export const ETH_DECIMALS = 18;
 /////////////////////////////
 
 export const FACTORY_ADDRESS = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
-export const TRADING_FEE = BigDecimal.fromString("3");
-export const PROTOCOL_FEE_TO_ON = BigDecimal.fromString("0.5");
-export const LP_FEE_TO_ON = BigDecimal.fromString("2.5");
-export const PROTOCOL_FEE_TO_OFF = BigDecimal.fromString("0.0");
-export const LP_FEE_TO_OFF = BigDecimal.fromString("3");
+export const TORN_ADDRESS = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
+export const vTORN_ADDRESS = "0x3eFA30704D2b8BBAc821307230376556cF8CC39e";
+export const vTORN_NAME = "TornadoCash voucher for early adopters";
+export const vTORN_SYMBOL = "vTORN";
+export const vTORN_DECIMALS = 18;
