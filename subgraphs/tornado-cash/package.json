@@ -4,7 +4,7 @@
   "config": {
     "protocol": "tornado-cash",
     "network": "ethereum",
-    "location": "dhruv-chauhan/tornado-dev-two",
+    "location": "dhruv-chauhan/tornado-cash-mainnet",
     "subgraph": "tornado-cash",
     "printlogs": "T",
     "merge": "F"
@@ -15,11 +15,11 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy:subgraph": "graph deploy --product hosted-service ${npm_package_config_location}",
-    "deploy": "graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ dhruv-chauhan/tornado-dev-two --access-token 805b3b60f4104e0788d4b79bb0e6cb9a",
+    "deploy": "graph deploy --product hosted-service ${npm_package_config_location} --access-token 805b3b60f4104e0788d4b79bb0e6cb9a",
     "deploy:": "node ../../deployment/deployment.js --subgraph=${npm_package_config_subgraph} --protocol=${npm_package_config_protocol} --network=${npm_package_config_network} --location=${npm_package_config_location} --printlogs=${npm_package_config_printlogs} --merge=${npm_package_config_merge}"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.26.0",
+    "@graphprotocol/graph-cli": "^0.26.0",
     "@graphprotocol/graph-ts": "0.24.1",
     "mustache": "^4.2.0"
   },
