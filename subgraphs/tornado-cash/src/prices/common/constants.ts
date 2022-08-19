@@ -5,8 +5,8 @@ import * as ARBITRUM_ONE from "../config/arbitrumOne";
 import * as POLYGON from "../config/polygon";
 
 import { Address, BigDecimal, BigInt, TypedMap } from "@graphprotocol/graph-ts";
-import { UniswapPair__getReservesResult } from "../../../generated/TornadoCashETH/UniswapPair";
-import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCashETH/SushiSwapPair";
+import { UniswapPair__getReservesResult } from "../../../generated/TornadoCashFeeManager/UniswapPair";
+import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCashFeeManager/SushiSwapPair";
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// COMMON ////////////////////////////////
@@ -117,8 +117,11 @@ CURVE_POOL_REGISTRY_ADDRESS_MAP.set(
 ///////////////////////////// SUSHISWAP CONTRACT //////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-export const SUSHISWAP_DEFAULT_RESERVE_CALL =
-  new SushiSwapPair__getReservesResult(BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO);
+export const SUSHISWAP_DEFAULT_RESERVE_CALL = new SushiSwapPair__getReservesResult(
+  BIGINT_ZERO,
+  BIGINT_ZERO,
+  BIGINT_ZERO
+);
 
 export const SUSHISWAP_CALCULATIONS_ADDRESS_MAP = new TypedMap<
   string,

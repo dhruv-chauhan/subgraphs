@@ -1,15 +1,15 @@
-specVersion: 0.0.4
-repository: https://github.com/dhruv-chauhan/subgraphs
+specVersion: 0.0.2
+repository: https://github.com/messari/subgraphs
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: TornadoCashETH
+    name: TornadoCashFeeManager
     network: mainnet
     source:
-      address: "0x47CE0C6eD5B0Ce3d3A51fdb1C52DC66a7c3c2936"
-      abi: TornadoCashETH
-      startBlock: 9117609
+      address: "0x5f6c97C6AD7bdd0AE7E0Dd4ca33A4ED3fDabD4D7"
+      abi: TornadoCashFeeManager
+      startBlock: 14173128
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -17,13 +17,15 @@ dataSources:
       file: ./src/mappings/handlers.ts
       entities:
         - Pool
-        - Protocol
-        - Token
       abis:
+        - name: TornadoCashFeeManager
+          file: ./abis/TornadoCashFeeManager.json
+
         - name: TornadoCashETH
-          file: ./abis/TornadoCash/ETH.json
+          file: ./abis/TornadoCashETH.json
         - name: TornadoCashERC20
-          file: ./abis/TornadoCash/ERC20.json
+          file: ./abis/TornadoCashERC20.json
+
         - name: ERC20
           file: ./abis/ERC20.json
         - name: ERC20SymbolBytes
@@ -67,28 +69,6 @@ dataSources:
         - name: CalculationsSushiSwap
           file: ./abis/Prices/Calculations/SushiSwap.json
       eventHandlers:
-        - event: Deposit(indexed bytes32,uint32,uint256)
-          handler: handleDeposit
-        - event: Withdrawal(address,bytes32,indexed address,uint256)
-          handler: handleWithdrawal
-  - kind: ethereum/contract
-    name: TornadoCashFeeManager
-    network: mainnet
-    source:
-      address: "0x5f6c97C6AD7bdd0AE7E0Dd4ca33A4ED3fDabD4D7"
-      abi: TornadoCashFeeManager
-      startBlock: 14173128
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/handlers.ts
-      entities:
-        - Pool
-      abis:
-        - name: TornadoCashFeeManager
-          file: ./abis/TornadoCash/FeeManager.json
-      eventHandlers:
         - event: FeeUpdated(indexed address,uint256)
           handler: handleFeeUpdated
   - kind: ethereum/contract
@@ -107,7 +87,7 @@ dataSources:
         - Pool
       abis:
         - name: TornadoCashMiner
-          file: ./abis/TornadoCash/Miner.json
+          file: ./abis/TornadoCashMiner.json
       eventHandlers:
         - event: RateChanged(address,uint256)
           handler: handleRateChanged
@@ -127,7 +107,464 @@ dataSources:
         - Pool
       abis:
         - name: TornadoCashRewardSwap
-          file: ./abis/TornadoCash/RewardSwap.json
+          file: ./abis/TornadoCashRewardSwap.json
       eventHandlers:
         - event: Swap(indexed address,uint256,uint256)
           handler: handleRewardSwap
+
+  - kind: ethereum/contract
+    name: TornadoCash01ETH
+    network: mainnet
+    source:
+      address: "0x12d66f87a04a9e220743712ce6d9bb1b5616b8fc"
+      abi: TornadoCashETH
+      startBlock: 9116966
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashETH
+          file: ./abis/TornadoCashETH.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash1ETH
+    network: mainnet
+    source:
+      address: "0x47CE0C6eD5B0Ce3d3A51fdb1C52DC66a7c3c2936"
+      abi: TornadoCashETH
+      startBlock: 9117609
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashETH
+          file: ./abis/TornadoCashETH.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash10ETH
+    network: mainnet
+    source:
+      address: "0x910cbd523d972eb0a6f4cae4618ad62622b39dbf"
+      abi: TornadoCashETH
+      startBlock: 9117720
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashETH
+          file: ./abis/TornadoCashETH.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash100ETH
+    network: mainnet
+    source:
+      address: "0xa160cdab225685da1d56aa342ad8841c3b53f291"
+      abi: TornadoCashETH
+      startBlock: 9161895
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashETH
+          file: ./abis/TornadoCashETH.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash100DAI
+    network: mainnet
+    source:
+      address: "0xD4B88Df4D29F5CedD6857912842cff3b20C8Cfa3"
+      abi: TornadoCashERC20
+      startBlock: 9117612
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash1000DAI
+    network: mainnet
+    source:
+      address: "0xfd8610d20aa15b7b2e3be39b396a1bc3516c7144"
+      abi: TornadoCashERC20
+      startBlock: 9161917
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash10000DAI
+    network: mainnet
+    source:
+      address: "0x07687e702b410Fa43f4cB4Af7FA097918ffD2730"
+      abi: TornadoCashERC20
+      startBlock: 14401271
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash100000DAI
+    network: mainnet
+    source:
+      address: "0x23773E65ed146A459791799d01336DB287f25334"
+      abi: TornadoCashERC20
+      startBlock: 12066048
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash5000cDAI
+    network: mainnet
+    source:
+      address: "0x22aaA7720ddd5388A3c0A3333430953C68f1849b"
+      abi: TornadoCashERC20
+      startBlock: 9161938
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash50000cDAI
+    network: mainnet
+    source:
+      address: "0x03893a7c7463AE47D46bc7f091665f1893656003"
+      abi: TornadoCashERC20
+      startBlock: 12069037
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash500000cDAI
+    network: mainnet
+    source:
+      address: "0x2717c5e28cf931547B621a5dddb772Ab6A35B701"
+      abi: TornadoCashERC20
+      startBlock: 12067606
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash5000000cDAI
+    network: mainnet
+    source:
+      address: "0xD21be7248e0197Ee08E0c20D4a96DEBdaC3D20Af"
+      abi: TornadoCashERC20
+      startBlock: 12066053
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash100USDC
+    network: mainnet
+    source:
+      address: "0x4736dCf1b7A3d580672CcE6E7c65cd5cc9cFBa9D"
+      abi: TornadoCashERC20
+      startBlock: 9161965
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash1000USDC
+    network: mainnet
+    source:
+      address: "0xd96f2B1c14Db8458374d9Aca76E26c3D18364307"
+      abi: TornadoCashERC20
+      startBlock: 9161958
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash100USDT
+    network: mainnet
+    source:
+      address: "0x169AD27A470D064DEDE56a2D3ff727986b15D52B"
+      abi: TornadoCashERC20
+      startBlock: 9162005
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash1000USDT
+    network: mainnet
+    source:
+      address: "0x0836222F2B2B24A3F36f98668Ed8F0B38D1a872f"
+      abi: TornadoCashERC20
+      startBlock: 9162012
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash01WBTC
+    network: mainnet
+    source:
+      address: "0x178169B423a011fff22B9e3F3abeA13414dDD0F1"
+      abi: TornadoCashERC20
+      startBlock: 12067529
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash1WBTC
+    network: mainnet
+    source:
+      address: "0x610B717796ad172B316836AC95a2ffad065CeaB4"
+      abi: TornadoCashERC20
+      startBlock: 12066652
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal
+  - kind: ethereum/contract
+    name: TornadoCash10WBTC
+    network: mainnet
+    source:
+      address: "0xbB93e510BbCD0B7beb5A853875f9eC60275CF498"
+      abi: TornadoCashERC20
+      startBlock: 13655652
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/handlers.ts
+      entities:
+        - Pool
+        - Protocol
+        - Token
+      abis:
+        - name: TornadoCashERC20
+          file: ./abis/TornadoCashERC20.json
+      eventHandlers:
+        - event: Deposit(indexed bytes32,uint32,uint256)
+          handler: handleDeposit
+        - event: Withdrawal(address,bytes32,indexed address,uint256)
+          handler: handleWithdrawal

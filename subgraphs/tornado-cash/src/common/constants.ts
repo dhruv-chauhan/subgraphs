@@ -4,11 +4,11 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 ///// Versions /////
 ////////////////////
 
-export const PROTOCOL_NAME = "Uniswap v2";
-export const PROTOCOL_SLUG = "uniswap-v2";
-export const PROTOCOL_SCHEMA_VERSION = "1.2.1";
-export const PROTOCOL_SUBGRAPH_VERSION = "1.0.2";
-export const PROTOCOL_METHODOLOGY_VERSION = "1.0.0";
+export const PROTOCOL_NAME = "Tornado Cash Classic";
+export const PROTOCOL_SLUG = "tornado-cash";
+export const PROTOCOL_SCHEMA_VERSION = "1.3.0";
+export const PROTOCOL_SUBGRAPH_VERSION = "1.0.0";
+export const PROTOCOL_METHODOLOGY_VERSION = "1.1.0";
 
 ////////////////////////
 ///// Schema Enums /////
@@ -50,82 +50,24 @@ export namespace ProtocolType {
   export const GENERIC = "GENERIC";
 }
 
-export namespace VaultFeeType {
-  export const MANAGEMENT_FEE = "MANAGEMENT_FEE";
-  export const PERFORMANCE_FEE = "PERFORMANCE_FEE";
-  export const DEPOSIT_FEE = "DEPOSIT_FEE";
-  export const WITHDRAWAL_FEE = "WITHDRAWAL_FEE";
-}
-
-export namespace LiquidityPoolFeeType {
-  export const FIXED_TRADING_FEE = "FIXED_TRADING_FEE";
-  export const TIERED_TRADING_FEE = "TIERED_TRADING_FEE";
-  export const DYNAMIC_TRADING_FEE = "DYNAMIC_TRADING_FEE";
-  export const FIXED_LP_FEE = "FIXED_LP_FEE";
-  export const DYNAMIC_LP_FEE = "DYNAMIC_LP_FEE";
-  export const FIXED_PROTOCOL_FEE = "FIXED_PROTOCOL_FEE";
-  export const DYNAMIC_PROTOCOL_FEE = "DYNAMIC_PROTOCOL_FEE";
-}
-
 export namespace RewardTokenType {
   export const DEPOSIT = "DEPOSIT";
   export const BORROW = "BORROW";
 }
 
-export namespace LendingType {
-  export const CDP = "CDP";
-  export const POOLED = "POOLED";
-}
+////////////////////
+///// Ethereum /////
+////////////////////
 
-export namespace RiskType {
-  export const GLOBAL = "GLOBAL";
-  export const ISOLATED = "ISOLATED";
-}
-
-export namespace InterestRateType {
-  export const STABLE = "STABLE";
-  export const VARIABLE = "VARIABLE";
-  export const FIXED = "FIXED";
-}
-
-export namespace InterestRateSide {
-  export const LENDER = "LENDER";
-  export const BORROWER = "BORROWER";
-}
-
-export namespace PositionSide {
-  export const LENDER = "LENDER";
-  export const BORROWER = "BORROWER";
-}
-
-export namespace UsageType {
-  export const DEPOSIT = "DEPOSIT";
-  export const WITHDRAW = "WITHDRAW";
-  export const SWAP = "SWAP";
-}
-
-//////////////////////////////
-///// Ethereum Addresses /////
-//////////////////////////////
-
+export const ETH_NAME = "Ether";
+export const ETH_SYMBOL = "ETH";
+export const ETH_DECIMALS = 18;
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
-export const UNISWAP_V2_FACTORY = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
-
-export const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-export const USDC_WETH_PAIR = "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc"; // created 10008355
-export const DAI_WETH_PAIR = "0xa478c2975ab1ea89e8196811f51a7b7ade33eb11"; // created block 10042267
-export const USDT_WETH_PAIR = "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852"; // created block 10093341
-
-////////////////////////f
+////////////////////////
 ///// Type Helpers /////
 ////////////////////////
-
-export const DEFAULT_DECIMALS = 18;
-
-export const USDC_DECIMALS = 6;
-export const USDC_DENOMINATOR = BigDecimal.fromString("1000000");
 
 export const BIGINT_ZERO = BigInt.fromI32(0);
 export const BIGINT_ONE = BigInt.fromI32(1);
@@ -160,15 +102,6 @@ export const DAYS_PER_YEAR = new BigDecimal(BigInt.fromI32(365));
 export const MS_PER_YEAR = DAYS_PER_YEAR.times(
   new BigDecimal(BigInt.fromI32(24 * 60 * 60 * 1000))
 );
-
-////////////////
-///// Misc /////
-////////////////
-
-export const c = "ETH";
-export const ETH_NAME = "Ether";
-export const ETH_SYMBOL = "ETH";
-export const ETH_DECIMALS = 18;
 
 /////////////////////////////
 ///// Protocol Specific /////

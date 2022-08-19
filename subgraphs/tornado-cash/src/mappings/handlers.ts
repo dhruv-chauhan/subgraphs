@@ -14,7 +14,7 @@ import {
 import {
   Deposit,
   Withdrawal,
-} from "../../generated/TornadoCashETH/TornadoCashETH";
+} from "../../generated/TornadoCashFeeManager/TornadoCashETH";
 import { FeeUpdated } from "../../generated/TornadoCashFeeManager/TornadoCashFeeManager";
 import { RateChanged } from "../../generated/TornadoCashMiner/TornadoCashMiner";
 import { Swap } from "../../generated/TornadoCashRewardSwap/TornadoCashRewardSwap";

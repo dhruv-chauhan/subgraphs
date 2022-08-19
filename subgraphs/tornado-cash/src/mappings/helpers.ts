@@ -16,7 +16,7 @@ import { TORN_ADDRESS, vTORN_ADDRESS } from "../common/constants";
 import {
   Deposit,
   Withdrawal,
-} from "../../generated/TornadoCashETH/TornadoCashETH";
+} from "../../generated/TornadoCashFeeManager/TornadoCashETH";
 import { FeeUpdated } from "../../generated/TornadoCashFeeManager/TornadoCashFeeManager";
 import { RateChanged } from "../../generated/TornadoCashMiner/TornadoCashMiner";
 import { Swap } from "../../generated/TornadoCashRewardSwap/TornadoCashRewardSwap";
@@ -50,15 +50,13 @@ export function createWithdrawal(event: Withdrawal): void {
   pool.totalValueLockedUSD = pool.totalValueLockedUSD.minus(
     bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
   );
-  pool.cumulativeProtocolSideRevenueUSD =
-    pool.cumulativeProtocolSideRevenueUSD.minus(
-      bigIntToBigDecimal(pool._fee.times(pool._denomination))
-    );
+  pool.cumulativeProtocolSideRevenueUSD = pool.cumulativeProtocolSideRevenueUSD.minus(
+    bigIntToBigDecimal(pool._fee.times(pool._denomination))
+  );
   // txn fee?
-  pool.cumulativeSupplySideRevenueUSD =
-    pool.cumulativeSupplySideRevenueUSD.plus(
-      bigIntToBigDecimal(event.params.fee.minus(pool._fee))
-    );
+  pool.cumulativeSupplySideRevenueUSD = pool.cumulativeSupplySideRevenueUSD.plus(
+    bigIntToBigDecimal(event.params.fee.minus(pool._fee))
+  );
   pool.cumulativeTotalRevenueUSD = pool.cumulativeTotalRevenueUSD.plus(
     pool.cumulativeProtocolSideRevenueUSD.plus(
       pool.cumulativeSupplySideRevenueUSD

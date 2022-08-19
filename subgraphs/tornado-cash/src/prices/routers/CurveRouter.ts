@@ -8,8 +8,8 @@ import * as utils from "../common/utils";
 import * as constants from "../common/constants";
 import { CustomPriceType } from "../common/types";
 import { getPriceUsdc as getPriceUsdcSushi } from "./SushiSwapRouter";
-import { CurveRegistry as CurveRegistryContract } from "../../../generated/TornadoCashETH/CurveRegistry";
-import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/TornadoCashETH/CurvePoolRegistry";
+import { CurveRegistry as CurveRegistryContract } from "../../../generated/TornadoCashFeeManager/CurveRegistry";
+import { CurvePoolRegistry as CurvePoolRegistryContract } from "../../../generated/TornadoCashFeeManager/CurvePoolRegistry";
 
 export function getCurvePriceUsdc(
   curveLpTokenAddress: Address,
@@ -160,8 +160,9 @@ export function isBasicToken(tokenAddress: Address, network: string): bool {
     basicTokenIdx++
   ) {
     let basicTokenName = constants.WHITELIST_TOKENS_LIST[basicTokenIdx];
-    let basicTokenAddress =
-      constants.WHITELIST_TOKENS_MAP.get(network)!.get(basicTokenName);
+    let basicTokenAddress = constants.WHITELIST_TOKENS_MAP.get(network)!.get(
+      basicTokenName
+    );
 
     if (
       basicTokenAddress &&

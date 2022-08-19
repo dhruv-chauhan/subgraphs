@@ -27,8 +27,8 @@ import {
 } from "./constants";
 import { getUsdPricePerToken } from "../prices";
 
-import { TornadoCashETH } from "../../generated/TornadoCashETH/TornadoCashETH";
-import { TornadoCashERC20 } from "../../generated/TornadoCashETH/TornadoCashERC20";
+import { TornadoCashETH } from "../../generated/TornadoCashFeeManager/TornadoCashETH";
+import { TornadoCashERC20 } from "../../generated/TornadoCashFeeManager/TornadoCashERC20";
 import {
   Protocol,
   Pool,
@@ -199,12 +199,18 @@ export function getOrCreatePoolDailySnapshot(
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
   let poolMetrics = PoolDailySnapshot.load(
-    event.address.toHexString().concat("-").concat(dayId)
+    event.address
+      .toHexString()
+      .concat("-")
+      .concat(dayId)
   );
 
   if (!poolMetrics) {
     poolMetrics = new PoolDailySnapshot(
-      event.address.toHexString().concat("-").concat(dayId)
+      event.address
+        .toHexString()
+        .concat("-")
+        .concat(dayId)
     );
     poolMetrics.protocol = FACTORY_ADDRESS;
     poolMetrics.pool = event.address.toHexString();
@@ -232,12 +238,18 @@ export function getOrCreatePoolHourlySnapshot(
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
   let poolMetrics = PoolHourlySnapshot.load(
-    event.address.toHexString().concat("-").concat(dayId)
+    event.address
+      .toHexString()
+      .concat("-")
+      .concat(dayId)
   );
 
   if (!poolMetrics) {
     poolMetrics = new PoolHourlySnapshot(
-      event.address.toHexString().concat("-").concat(dayId)
+      event.address
+        .toHexString()
+        .concat("-")
+        .concat(dayId)
     );
     poolMetrics.protocol = FACTORY_ADDRESS;
     poolMetrics.pool = event.address.toHexString();

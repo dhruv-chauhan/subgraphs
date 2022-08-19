@@ -4,10 +4,10 @@ import { CustomPriceType } from "../common/types";
 import {
   UniswapPair as UniswapPairContract,
   UniswapPair__getReservesResult,
-} from "../../../generated/TornadoCashETH/UniswapPair";
+} from "../../../generated/TornadoCashFeeManager/UniswapPair";
 
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { UniswapRouter as UniswapRouterContract } from "../../../generated/TornadoCashETH/UniswapRouter";
+import { UniswapRouter as UniswapRouterContract } from "../../../generated/TornadoCashFeeManager/UniswapRouter";
 
 export function isLpToken(tokenAddress: Address, network: string): bool {
   if (
@@ -60,8 +60,9 @@ export function getPriceFromRouter(
   // Construct swap path
   let path: Address[] = [];
   let numberOfJumps: BigInt;
-  let pathOverride =
-    constants.UNISWAP_PATH_OVERRIDES.get(network)!.get(token0Address);
+  let pathOverride = constants.UNISWAP_PATH_OVERRIDES.get(network)!.get(
+    token0Address
+  );
   if (pathOverride) {
     path = pathOverride;
     numberOfJumps = BigInt.fromI32(path.length - 1);
@@ -96,10 +97,12 @@ export function getPriceFromRouter(
   let token0Decimals = utils.getTokenDecimals(token0Address);
   let amountIn = BigInt.fromI32(10).pow(token0Decimals.toI32() as u8);
 
-  let routerAddressV1 =
-    constants.UNISWAP_ROUTER_CONTRACT_ADDRESSES.get(network)!.get("routerV1");
-  let routerAddressV2 =
-    constants.UNISWAP_ROUTER_CONTRACT_ADDRESSES.get(network)!.get("routerV2");
+  let routerAddressV1 = constants.UNISWAP_ROUTER_CONTRACT_ADDRESSES.get(
+    network
+  )!.get("routerV1");
+  let routerAddressV2 = constants.UNISWAP_ROUTER_CONTRACT_ADDRESSES.get(
+    network
+  )!.get("routerV2");
 
   let amountOutArray: ethereum.CallResult<BigInt[]>;
   if (routerAddressV1) {
