@@ -7,7 +7,7 @@ import {
   PROTOCOL_NAME,
   PROTOCOL_SLUG,
   FACTORY_ADDRESS,
-  vTORN_ADDRESS,
+  TORN_ADDRESS,
 } from "../../../../../src/common/constants";
 import { RewardIntervalType } from "../../../../../src/common/rewards";
 
@@ -37,6 +37,6 @@ export class TornadoCashBscConfigurations implements Configurations {
     return RewardIntervalType.BLOCK;
   }
   getRewardToken(): string {
-    return vTORN_ADDRESS;
+    return TORN_ADDRESS;
   }
 }

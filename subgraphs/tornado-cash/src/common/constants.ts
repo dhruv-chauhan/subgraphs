@@ -109,7 +109,6 @@ export const MS_PER_YEAR = DAYS_PER_YEAR.times(
 
 export const FACTORY_ADDRESS = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 export const TORN_ADDRESS = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
-export const vTORN_ADDRESS = "0x3eFA30704D2b8BBAc821307230376556cF8CC39e";
-export const vTORN_NAME = "TornadoCash voucher for early adopters";
-export const vTORN_SYMBOL = "vTORN";
-export const vTORN_DECIMALS = 18;
+export const TORN_NAME = "TornadoCash";
+export const TORN_SYMBOL = "TORN";
+export const TORN_DECIMALS = 18;

@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { Address } from "@graphprotocol/graph-ts";
+import { Address, log } from "@graphprotocol/graph-ts";
 
 import { ERC20 } from "../../generated/TornadoCashFeeManager/ERC20";
 import { ERC20SymbolBytes } from "../../generated/TornadoCashFeeManager/ERC20SymbolBytes";
@@ -27,9 +27,8 @@ export function fetchTokenSymbol(tokenAddress: Address): string {
       symbolValue = symbolResultBytes.value.toString();
     } else {
       // try with the static definition
-      let staticTokenDefinition = StaticTokenDefinition.fromAddress(
-        tokenAddress
-      );
+      let staticTokenDefinition =
+        StaticTokenDefinition.fromAddress(tokenAddress);
       if (staticTokenDefinition != null) {
         symbolValue = staticTokenDefinition.symbol;
       }
@@ -58,9 +57,8 @@ export function fetchTokenName(tokenAddress: Address): string {
       nameValue = nameResultBytes.value.toString();
     } else {
       // try with the static definition
-      let staticTokenDefinition = StaticTokenDefinition.fromAddress(
-        tokenAddress
-      );
+      let staticTokenDefinition =
+        StaticTokenDefinition.fromAddress(tokenAddress);
       if (staticTokenDefinition != null) {
         nameValue = staticTokenDefinition.name;
       }
@@ -113,7 +111,7 @@ class StaticTokenDefinition {
 
   // Get all tokens with a static defintion
   static getStaticDefinitions(): Array<StaticTokenDefinition> {
-    let staticDefinitions = new Array<StaticTokenDefinition>(6);
+    let staticDefinitions = new Array<StaticTokenDefinition>(7);
 
     // Add DGD
     let tokenDGD = new StaticTokenDefinition(
@@ -169,6 +167,15 @@ class StaticTokenDefinition {
     );
     staticDefinitions.push(tokenHPB);
 
+    // Add TORN
+    let tokenTORN = new StaticTokenDefinition(
+      Address.fromString("0x77777FeDdddFfC19Ff86DB637967013e6C6A116C"),
+      "TORN",
+      "TornadoCash",
+      18 as i32
+    );
+    staticDefinitions.push(tokenTORN);
+
     return staticDefinitions;
   }
 
@@ -176,6 +183,12 @@ class StaticTokenDefinition {
   static fromAddress(tokenAddress: Address): StaticTokenDefinition | null {
     let staticDefinitions = this.getStaticDefinitions();
     let tokenAddressHex = tokenAddress.toHexString();
+
+    log.info("TORN address: {}", [tokenAddressHex]);
+    log.info("static {} address: {}", [
+      staticDefinitions[6].name,
+      staticDefinitions[6].address.toHexString(),
+    ]);
 
     // Search the definition using the address
     for (let i = 0; i < staticDefinitions.length; i++) {

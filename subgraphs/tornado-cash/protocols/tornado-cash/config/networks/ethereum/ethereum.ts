@@ -7,6 +7,7 @@ import {
   PROTOCOL_NAME,
   PROTOCOL_SLUG,
   FACTORY_ADDRESS,
+  TORN_ADDRESS,
 } from "../../../../../src/common/constants";
 import { RewardIntervalType } from "../../../../../src/common/rewards";
 
@@ -33,9 +34,9 @@ export class TornadoCashMainnetConfigurations implements Configurations {
     return FACTORY_ADDRESS;
   }
   getRewardIntervalType(): string {
-    return RewardIntervalType.TIMESTAMP;
+    return RewardIntervalType.BLOCK;
   }
   getRewardToken(): string {
-    return "";
+    return TORN_ADDRESS;
   }
 }

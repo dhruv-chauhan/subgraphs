@@ -20,10 +20,10 @@ import {
   ETH_NAME,
   ETH_SYMBOL,
   ETH_DECIMALS,
-  vTORN_ADDRESS,
-  vTORN_NAME,
-  vTORN_SYMBOL,
-  vTORN_DECIMALS,
+  TORN_ADDRESS,
+  TORN_NAME,
+  TORN_SYMBOL,
+  TORN_DECIMALS,
 } from "./constants";
 import { getUsdPricePerToken } from "../prices";
 
@@ -79,10 +79,10 @@ export function getOrCreateToken(
       token.name = ETH_NAME;
       token.symbol = ETH_SYMBOL;
       token.decimals = ETH_DECIMALS;
-    } else if (tokenAddress == Address.fromString(vTORN_ADDRESS)) {
-      token.name = vTORN_NAME;
-      token.symbol = vTORN_SYMBOL;
-      token.decimals = vTORN_DECIMALS;
+    } else if (tokenAddress == Address.fromString(TORN_ADDRESS)) {
+      token.name = TORN_NAME;
+      token.symbol = TORN_SYMBOL;
+      token.decimals = TORN_DECIMALS;
     } else {
       token.name = fetchTokenName(tokenAddress);
       token.symbol = fetchTokenSymbol(tokenAddress);
@@ -106,12 +106,16 @@ export function getOrCreateRewardToken(
   address: Address,
   blockNumber: BigInt
 ): RewardToken {
-  let rewardToken = RewardToken.load(address.toHexString());
+  let rewardToken = RewardToken.load(
+    RewardTokenType.DEPOSIT + "-" + address.toHexString()
+  );
 
   if (!rewardToken) {
     let token = getOrCreateToken(address, blockNumber);
 
-    rewardToken = new RewardToken(address.toHexString());
+    rewardToken = new RewardToken(
+      RewardTokenType.DEPOSIT + "-" + address.toHexString()
+    );
 
     rewardToken.token = token.id;
     rewardToken.type = RewardTokenType.DEPOSIT;
@@ -172,7 +176,7 @@ export function getOrCreatePool(
 
     pool.rewardTokens = [
       getOrCreateRewardToken(
-        Address.fromString(vTORN_ADDRESS),
+        Address.fromString(TORN_ADDRESS),
         event.block.number
       ).id,
     ];
@@ -199,18 +203,12 @@ export function getOrCreatePoolDailySnapshot(
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
   let poolMetrics = PoolDailySnapshot.load(
-    event.address
-      .toHexString()
-      .concat("-")
-      .concat(dayId)
+    event.address.toHexString().concat("-").concat(dayId)
   );
 
   if (!poolMetrics) {
     poolMetrics = new PoolDailySnapshot(
-      event.address
-        .toHexString()
-        .concat("-")
-        .concat(dayId)
+      event.address.toHexString().concat("-").concat(dayId)
     );
     poolMetrics.protocol = FACTORY_ADDRESS;
     poolMetrics.pool = event.address.toHexString();
@@ -238,18 +236,12 @@ export function getOrCreatePoolHourlySnapshot(
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
   let poolMetrics = PoolHourlySnapshot.load(
-    event.address
-      .toHexString()
-      .concat("-")
-      .concat(dayId)
+    event.address.toHexString().concat("-").concat(dayId)
   );
 
   if (!poolMetrics) {
     poolMetrics = new PoolHourlySnapshot(
-      event.address
-        .toHexString()
-        .concat("-")
-        .concat(dayId)
+      event.address.toHexString().concat("-").concat(dayId)
     );
     poolMetrics.protocol = FACTORY_ADDRESS;
     poolMetrics.pool = event.address.toHexString();
