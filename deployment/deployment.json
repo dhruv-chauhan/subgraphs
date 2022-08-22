@@ -1059,6 +1059,22 @@
           "deploy-on-merge": true
         }
       }
+    },
+    "tornado-cash": {
+      "tornado-cash": {
+        "mainnet": {
+          "template": "tornado-cash.template.yaml",
+          "messari": "messari/tornado-cash-mainnet",
+          "dhruv-chauhan": "dhruv-chauhan/tornado-cash-mainnet",
+          "deploy-on-merge": true
+        },
+        "bsc": {
+          "template": "tornado-cash.template.yaml",
+          "messari": "messari/tornado-cash-bsc",
+          "dhruv-chauhan": "dhruv-chauhan/tornado-cash-bsc",
+          "deploy-on-merge": true
+        }
+      }
     }
   }
 }

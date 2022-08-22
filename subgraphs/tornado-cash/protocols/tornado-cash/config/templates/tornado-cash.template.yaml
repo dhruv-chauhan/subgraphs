@@ -1,5 +1,10 @@
 specVersion: 0.0.1
 repository: https://github.com/messari/subgraphs
+# features:
+#   - grafting
+# graft:
+#   base: QmcjxZ4ooWyuem3xfqkYU5zYiA6oWWjgbgqRKp6g12U4iZ
+#   block: 11480528
 schema:
   file: ./schema.graphql
 dataSources:

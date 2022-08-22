@@ -37,9 +37,6 @@ export function handleWithdrawal(event: Withdrawal): void {
 
 export function handleFeeUpdated(event: FeeUpdated): void {
   createFeeUpdated(event);
-
-  updatePoolMetrics(event);
-  updateFinancials(event);
 }
 
 export function handleRateChanged(event: RateChanged): void {

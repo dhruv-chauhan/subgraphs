@@ -26,6 +26,7 @@ import {
   TORN_DECIMALS,
 } from "./constants";
 import { getUsdPricePerToken } from "../prices";
+import { addToArrayAtIndex } from "../common/utils/arrays";
 
 import { TornadoCashETH } from "../../generated/TornadoCashFeeManager/TornadoCashETH";
 import { TornadoCashERC20 } from "../../generated/TornadoCashFeeManager/TornadoCashERC20";
@@ -48,9 +49,9 @@ export function getOrCreateProtocol(): Protocol {
     protocol = new Protocol(FACTORY_ADDRESS);
     protocol.name = PROTOCOL_NAME;
     protocol.slug = PROTOCOL_SLUG;
-    protocol.methodologyVersion = PROTOCOL_METHODOLOGY_VERSION;
     protocol.schemaVersion = PROTOCOL_SCHEMA_VERSION;
     protocol.subgraphVersion = PROTOCOL_SUBGRAPH_VERSION;
+    protocol.methodologyVersion = PROTOCOL_METHODOLOGY_VERSION;
     protocol.network = Network.MAINNET;
     protocol.type = ProtocolType.GENERIC;
     protocol.totalValueLockedUSD = BIGDECIMAL_ZERO;
@@ -59,6 +60,7 @@ export function getOrCreateProtocol(): Protocol {
     protocol.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
     protocol.cumulativeUniqueUsers = 0;
     protocol.totalPoolCount = 0;
+    protocol.pools = [];
 
     protocol.save();
   }
@@ -107,19 +109,18 @@ export function getOrCreateRewardToken(
   blockNumber: BigInt
 ): RewardToken {
   let rewardToken = RewardToken.load(
-    RewardTokenType.DEPOSIT + "-" + address.toHexString()
+    RewardTokenType.DEPOSIT.concat("-").concat(address.toHexString())
   );
 
   if (!rewardToken) {
     let token = getOrCreateToken(address, blockNumber);
 
     rewardToken = new RewardToken(
-      RewardTokenType.DEPOSIT + "-" + address.toHexString()
+      RewardTokenType.DEPOSIT.concat("-").concat(address.toHexString())
     );
 
     rewardToken.token = token.id;
     rewardToken.type = RewardTokenType.DEPOSIT;
-    rewardToken._lastPriceUSD = BIGDECIMAL_ZERO;
 
     rewardToken.save();
   }
@@ -134,9 +135,10 @@ export function getOrCreatePool(
   let pool = Pool.load(poolAddress);
 
   if (!pool) {
-    pool = new Pool(poolAddress);
+    let protocol = getOrCreateProtocol();
+    let usageMetricsDaily = getOrCreateUsageMetricDailySnapshot(event);
 
-    pool.protocol = getOrCreateProtocol().id;
+    pool = new Pool(poolAddress);
 
     let contractERC20 = TornadoCashERC20.bind(Address.fromString(poolAddress));
     let token_call = contractERC20.try_token();
@@ -180,7 +182,10 @@ export function getOrCreatePool(
         event.block.number
       ).id,
     ];
+    pool.rewardTokenEmissionsAmount = [BIGINT_ZERO];
+    pool.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
 
+    pool.protocol = protocol.id;
     pool._fee = BIGINT_ZERO;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
     pool.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -192,6 +197,13 @@ export function getOrCreatePool(
     pool.createdBlockNumber = event.block.number;
 
     pool.save();
+
+    protocol.pools = addToArrayAtIndex<string>(protocol.pools, pool.id);
+    protocol.totalPoolCount = protocol.totalPoolCount + 1;
+    protocol.save();
+
+    usageMetricsDaily.totalPoolCount = usageMetricsDaily.totalPoolCount + 1;
+    usageMetricsDaily.save();
   }
 
   return pool;
@@ -217,9 +229,11 @@ export function getOrCreatePoolDailySnapshot(
     poolMetrics.dailySupplySideRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.dailyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
-    poolMetrics.cumulativeTotalRevenueUSD;
-    poolMetrics.dailyTotalRevenueUSD;
+    poolMetrics.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.dailyTotalRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.inputTokenBalances = [BIGINT_ZERO];
+    poolMetrics.rewardTokenEmissionsAmount = [BIGINT_ZERO];
+    poolMetrics.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
 
     poolMetrics.blockNumber = event.block.number;
     poolMetrics.timestamp = event.block.timestamp;
@@ -250,9 +264,11 @@ export function getOrCreatePoolHourlySnapshot(
     poolMetrics.hourlySupplySideRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.hourlyProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
-    poolMetrics.cumulativeTotalRevenueUSD;
-    poolMetrics.hourlyTotalRevenueUSD;
+    poolMetrics.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
+    poolMetrics.hourlyTotalRevenueUSD = BIGDECIMAL_ZERO;
     poolMetrics.inputTokenBalances = [BIGINT_ZERO];
+    poolMetrics.rewardTokenEmissionsAmount = [BIGINT_ZERO];
+    poolMetrics.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
 
     poolMetrics.blockNumber = event.block.number;
     poolMetrics.timestamp = event.block.timestamp;
@@ -278,6 +294,7 @@ export function getOrCreateUsageMetricDailySnapshot(
     usageMetrics.dailyActiveUsers = INT_ZERO;
     usageMetrics.cumulativeUniqueUsers = INT_ZERO;
     usageMetrics.dailyTransactionCount = INT_ZERO;
+    usageMetrics.totalPoolCount = INT_ZERO;
     usageMetrics.blockNumber = event.block.number;
     usageMetrics.timestamp = event.block.timestamp;
 
