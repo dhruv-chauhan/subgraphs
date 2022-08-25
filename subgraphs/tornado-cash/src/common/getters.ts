@@ -27,9 +27,10 @@ import {
 } from "./constants";
 import { getUsdPricePerToken } from "../prices";
 import { addToArrayAtIndex } from "../common/utils/arrays";
+import { bigIntToBigDecimal } from "./utils/numbers";
 
-import { TornadoCashETH } from "../../generated/TornadoCashFeeManager/TornadoCashETH";
-import { TornadoCashERC20 } from "../../generated/TornadoCashFeeManager/TornadoCashERC20";
+import { TornadoCashETH } from "../../generated/TornadoCashMiner/TornadoCashETH";
+import { TornadoCashERC20 } from "../../generated/TornadoCashMiner/TornadoCashERC20";
 import {
   Protocol,
   Pool,
@@ -90,15 +91,19 @@ export function getOrCreateToken(
       token.symbol = fetchTokenSymbol(tokenAddress);
       token.decimals = fetchTokenDecimals(tokenAddress) as i32;
     }
+    token.lastPriceUSD = BIGDECIMAL_ZERO;
+    token.lastPriceBlockNumber = blockNumber;
   }
 
-  const price = getUsdPricePerToken(tokenAddress);
-  if (price.reverted) {
-    token.lastPriceUSD = BIGDECIMAL_ZERO;
-  } else {
-    token.lastPriceUSD = price.usdPrice.div(price.decimalsBaseTen);
+  if (token.lastPriceBlockNumber! < blockNumber) {
+    let price = getUsdPricePerToken(tokenAddress, blockNumber);
+    if (price.reverted) {
+      token.lastPriceUSD = BIGDECIMAL_ZERO;
+    } else {
+      token.lastPriceUSD = price.usdPrice.div(price.decimalsBaseTen);
+    }
+    token.lastPriceBlockNumber = blockNumber;
   }
-  token.lastPriceBlockNumber = blockNumber;
   token.save();
 
   return token;
@@ -136,46 +141,55 @@ export function getOrCreatePool(
 
   if (!pool) {
     let protocol = getOrCreateProtocol();
-    let usageMetricsDaily = getOrCreateUsageMetricDailySnapshot(event);
 
     pool = new Pool(poolAddress);
 
-    let contractERC20 = TornadoCashERC20.bind(Address.fromString(poolAddress));
-    let token_call = contractERC20.try_token();
+    let contractTCERC20 = TornadoCashERC20.bind(
+      Address.fromString(poolAddress)
+    );
+    let token_call = contractTCERC20.try_token();
     if (!token_call.reverted) {
       let token = getOrCreateToken(token_call.value, event.block.number);
-      pool.inputTokens = [token.id];
 
-      let denomination_call = contractERC20.try_denomination();
+      let denomination_call = contractTCERC20.try_denomination();
       if (!denomination_call.reverted) {
-        let denomination = denomination_call.value.div(
-          BigInt.fromI32(10).pow(token.decimals as u8)
-        );
+        let denomination = denomination_call.value;
 
+        pool.name = `TornadoCash ${bigIntToBigDecimal(
+          denomination,
+          token.decimals
+        )}${token.symbol}`;
+        pool.symbol = `${bigIntToBigDecimal(denomination, token.decimals)}${
+          token.symbol
+        }`;
         pool._denomination = denomination;
-        pool.name = `TornadoCash ${denomination}${token.symbol}`;
-        pool.symbol = `${denomination}${token.symbol}`;
       }
+      pool.inputTokens = [token.id];
     } else {
       let token = getOrCreateToken(
         Address.fromString(ETH_ADDRESS),
         event.block.number
       );
-      pool.inputTokens = [token.id];
 
-      let contractETH = TornadoCashETH.bind(Address.fromString(poolAddress));
-      let denomination_call = contractETH.try_denomination();
+      let contractTCETH = TornadoCashETH.bind(Address.fromString(poolAddress));
+      let denomination_call = contractTCETH.try_denomination();
       if (!denomination_call.reverted) {
-        let denomination = denomination_call.value.div(
-          BigInt.fromI32(10).pow(token.decimals as u8)
-        );
+        let denomination = denomination_call.value;
 
+        pool.name = `TornadoCash ${bigIntToBigDecimal(
+          denomination,
+          token.decimals
+        )}${token.symbol}`;
+        pool.symbol = `${bigIntToBigDecimal(denomination, token.decimals)}${
+          token.symbol
+        }`;
         pool._denomination = denomination;
-        pool.name = `TornadoCash ${denomination}${token.symbol}`;
-        pool.symbol = `${denomination}${token.symbol}`;
       }
+      pool.inputTokens = [token.id];
     }
 
+    pool.protocol = protocol.id;
+    pool._fee = BIGINT_ZERO;
     pool.rewardTokens = [
       getOrCreateRewardToken(
         Address.fromString(TORN_ADDRESS),
@@ -184,26 +198,18 @@ export function getOrCreatePool(
     ];
     pool.rewardTokenEmissionsAmount = [BIGINT_ZERO];
     pool.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
-
-    pool.protocol = protocol.id;
-    pool._fee = BIGINT_ZERO;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
     pool.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
     pool.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;
     pool.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
     pool.inputTokenBalances = [BIGINT_ZERO];
-
     pool.createdTimestamp = event.block.timestamp;
     pool.createdBlockNumber = event.block.number;
-
     pool.save();
 
     protocol.pools = addToArrayAtIndex<string>(protocol.pools, pool.id);
     protocol.totalPoolCount = protocol.totalPoolCount + 1;
     protocol.save();
-
-    usageMetricsDaily.totalPoolCount = usageMetricsDaily.totalPoolCount + 1;
-    usageMetricsDaily.save();
   }
 
   return pool;
@@ -214,6 +220,7 @@ export function getOrCreatePoolDailySnapshot(
 ): PoolDailySnapshot {
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
+
   let poolMetrics = PoolDailySnapshot.load(
     event.address.toHexString().concat("-").concat(dayId)
   );
@@ -249,6 +256,7 @@ export function getOrCreatePoolHourlySnapshot(
 ): PoolHourlySnapshot {
   let day = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = day.toString();
+
   let poolMetrics = PoolHourlySnapshot.load(
     event.address.toHexString().concat("-").concat(dayId)
   );
@@ -285,7 +293,7 @@ export function getOrCreateUsageMetricDailySnapshot(
   // Number of days since Unix epoch
   let id = event.block.timestamp.toI32() / SECONDS_PER_DAY;
   let dayId = id.toString();
-  // Create unique id for the day
+
   let usageMetrics = UsageMetricsDailySnapshot.load(dayId);
 
   if (!usageMetrics) {
@@ -311,7 +319,6 @@ export function getOrCreateUsageMetricHourlySnapshot(
   let hour = event.block.timestamp.toI32() / SECONDS_PER_HOUR;
   let hourId = hour.toString();
 
-  // Create unique id for the day
   let usageMetrics = UsageMetricsHourlySnapshot.load(hourId);
 
   if (!usageMetrics) {

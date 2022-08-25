@@ -64,3 +64,8 @@ export function wadToRay(a: BigInt): BigInt {
   const result = a.times(BigInt.fromI32(10).pow(9));
   return result;
 }
+
+// Round BigDecimal to whole number
+export function roundToWholeNumber(n: BigDecimal): BigDecimal {
+  return n.truncate(0);
+}

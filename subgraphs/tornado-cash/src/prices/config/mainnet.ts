@@ -69,6 +69,22 @@ export const CHAIN_LINK_CONTRACT_ADDRESS = Address.fromString(
 );
 
 ///////////////////////////////////////////////////////////////////////////
+/////////////////////////// UNISWAP POOL CONTRACT /////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+export const UNISWAP_DAI_CONTRACT_ADDRESS = Address.fromString(
+  "0x2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667"
+);
+
+export const UNISWAP_USDC_CONTRACT_ADDRESS = Address.fromString(
+  "0x97deC872013f6B5fB443861090ad931542878126"
+);
+
+export const UNISWAP_cDAI_CONTRACT_ADDRESS = Address.fromString(
+  "0x34E89740adF97C3A9D3f63Cc2cE4a914382c230b"
+);
+
+///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// HELPERS /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
@@ -106,4 +122,8 @@ WHITELIST_TOKENS.set(
 WHITELIST_TOKENS.set(
   "LINK",
   Address.fromString("0x514910771AF9Ca656af840dff83E8264EcF986CA")
+);
+WHITELIST_TOKENS.set(
+  "cDAI",
+  Address.fromString("0x5d3a536e4d6dbd6114cc1ead35777bab948e3643")
 );

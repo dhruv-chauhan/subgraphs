@@ -5,8 +5,8 @@ import * as ARBITRUM_ONE from "../config/arbitrumOne";
 import * as POLYGON from "../config/polygon";
 
 import { Address, BigDecimal, BigInt, TypedMap } from "@graphprotocol/graph-ts";
-import { UniswapPair__getReservesResult } from "../../../generated/TornadoCashFeeManager/UniswapPair";
-import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCashFeeManager/SushiSwapPair";
+import { UniswapPair__getReservesResult } from "../../../generated/TornadoCashMiner/UniswapPair";
+import { SushiSwapPair__getReservesResult } from "../../../generated/TornadoCashMiner/SushiSwapPair";
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// COMMON ////////////////////////////////
@@ -19,6 +19,10 @@ export const BIGINT_TEN_THOUSAND = BigInt.fromI32(10000);
 export const BIGDECIMAL_ZERO = new BigDecimal(BIGINT_ZERO);
 
 export const DEFAULT_USDC_DECIMALS = 6;
+export const DEFAULT_USDT_DECIMALS = 6;
+export const DEFAULT_DAI_DECIMALS = 18;
+export const DEFAULT_ETH_DECIMALS = 18;
+export const DEFAULT_cDAI_DECIMALS = 8;
 export const DEFAULT_DECIMALS = BigInt.fromI32(18);
 
 export const ZERO_ADDRESS_STRING = "0x0000000000000000000000000000000000000000";
@@ -117,11 +121,8 @@ CURVE_POOL_REGISTRY_ADDRESS_MAP.set(
 ///////////////////////////// SUSHISWAP CONTRACT //////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-export const SUSHISWAP_DEFAULT_RESERVE_CALL = new SushiSwapPair__getReservesResult(
-  BIGINT_ZERO,
-  BIGINT_ZERO,
-  BIGINT_ZERO
-);
+export const SUSHISWAP_DEFAULT_RESERVE_CALL =
+  new SushiSwapPair__getReservesResult(BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO);
 
 export const SUSHISWAP_CALCULATIONS_ADDRESS_MAP = new TypedMap<
   string,
@@ -299,6 +300,28 @@ CHAIN_LINK_CONTRACT_ADDRESS.set(
 CHAIN_LINK_CONTRACT_ADDRESS.set(
   POLYGON.NETWORK_STRING,
   POLYGON.CHAIN_LINK_CONTRACT_ADDRESS
+);
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////// UNISWAP V1 CONTRACT /////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+export const UNISWAP_DAI_CONTRACT_ADDRESS = new Map<string, Address>();
+UNISWAP_DAI_CONTRACT_ADDRESS.set(
+  MAINNET.NETWORK_STRING,
+  MAINNET.UNISWAP_DAI_CONTRACT_ADDRESS
+);
+
+export const UNISWAP_USDC_CONTRACT_ADDRESS = new Map<string, Address>();
+UNISWAP_USDC_CONTRACT_ADDRESS.set(
+  MAINNET.NETWORK_STRING,
+  MAINNET.UNISWAP_USDC_CONTRACT_ADDRESS
+);
+
+export const UNISWAP_cDAI_CONTRACT_ADDRESS = new Map<string, Address>();
+UNISWAP_cDAI_CONTRACT_ADDRESS.set(
+  MAINNET.NETWORK_STRING,
+  MAINNET.UNISWAP_cDAI_CONTRACT_ADDRESS
 );
 
 ///////////////////////////////////////////////////////////////////////////

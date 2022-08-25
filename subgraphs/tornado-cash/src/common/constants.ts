@@ -107,7 +107,7 @@ export const MS_PER_YEAR = DAYS_PER_YEAR.times(
 ///// Protocol Specific /////
 /////////////////////////////
 
-export const FACTORY_ADDRESS = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+export const FACTORY_ADDRESS = "0xCEe71753C9820f063b38FDbE4cFDAf1d3D928A80";
 export const TORN_ADDRESS = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
 export const TORN_NAME = "TornadoCash";
 export const TORN_SYMBOL = "TORN";

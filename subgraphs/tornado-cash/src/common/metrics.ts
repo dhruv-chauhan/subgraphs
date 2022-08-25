@@ -1,5 +1,5 @@
 import { ethereum } from "@graphprotocol/graph-ts";
-import { Account, ActiveAccount } from "../../generated/schema";
+
 import { INT_ONE, SECONDS_PER_DAY, SECONDS_PER_HOUR } from "./constants";
 import {
   getOrCreateProtocol,
@@ -11,12 +11,17 @@ import {
   getOrCreateFinancialsDailySnapshot,
 } from "./getters";
 
+import { Account, ActiveAccount } from "../../generated/schema";
+
 // Update Pool Snapshots entities
-export function updatePoolMetrics(event: ethereum.Event): void {
+export function updatePoolMetrics(
+  poolAddress: string,
+  event: ethereum.Event
+): void {
   let poolMetricsDaily = getOrCreatePoolDailySnapshot(event);
   let poolMetricsHourly = getOrCreatePoolHourlySnapshot(event);
 
-  let pool = getOrCreatePool(event.address.toHexString(), event);
+  let pool = getOrCreatePool(poolAddress, event);
 
   poolMetricsDaily.totalValueLockedUSD = pool.totalValueLockedUSD;
   poolMetricsDaily.cumulativeSupplySideRevenueUSD =
@@ -99,6 +104,8 @@ export function updateUsageMetrics(event: ethereum.Event): void {
   }
   usageMetricsDaily.cumulativeUniqueUsers = protocol.cumulativeUniqueUsers;
   usageMetricsHourly.cumulativeUniqueUsers = protocol.cumulativeUniqueUsers;
+
+  usageMetricsDaily.totalPoolCount = protocol.totalPoolCount;
 
   usageMetricsDaily.save();
   usageMetricsHourly.save();

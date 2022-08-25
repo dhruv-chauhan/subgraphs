@@ -1,74 +1,81 @@
-import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 
 import {
   getOrCreateProtocol,
   getOrCreatePool,
   getOrCreateToken,
-  getOrCreateRewardToken,
   getOrCreatePoolDailySnapshot,
   getOrCreatePoolHourlySnapshot,
   getOrCreateFinancialsDailySnapshot,
 } from "../common/getters";
 import {
-  bigDecimalToBigInt,
   bigIntToBigDecimal,
+  roundToWholeNumber,
 } from "../common/utils/numbers";
 import { getRewardsPerDay, RewardIntervalType } from "../common/rewards";
 import { TORN_ADDRESS } from "../common/constants";
 import { getUsdPrice } from "../prices";
+import { updatePoolMetrics } from "../common/metrics";
 
 import {
   Deposit,
   Withdrawal,
-} from "../../generated/TornadoCashFeeManager/TornadoCashETH";
+} from "../../generated/TornadoCashMiner/TornadoCashETH";
 import { FeeUpdated } from "../../generated/TornadoCashFeeManager/TornadoCashFeeManager";
 import { RateChanged } from "../../generated/TornadoCashMiner/TornadoCashMiner";
 import { Swap } from "../../generated/TornadoCashRewardSwap/TornadoCashRewardSwap";
 
-export function createDeposit(event: Deposit): void {
-  let protocol = getOrCreateProtocol();
-  let pool = getOrCreatePool(event.address.toHexString(), event);
+export function createDeposit(poolAddress: string, event: Deposit): void {
+  let pool = getOrCreatePool(poolAddress, event);
   let inputToken = getOrCreateToken(
     Address.fromString(pool.inputTokens[0]),
     event.block.number
   );
 
-  pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(
-    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
-  );
+  let depositValueUsd = bigIntToBigDecimal(
+    pool._denomination,
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
+
+  pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(depositValueUsd);
   pool.inputTokenBalances = [
     pool.inputTokenBalances[0].plus(pool._denomination),
   ];
   pool.save();
 
-  protocol.totalValueLockedUSD = protocol.totalValueLockedUSD.plus(
-    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
-  );
+  let protocol = getOrCreateProtocol();
 
+  protocol.totalValueLockedUSD =
+    protocol.totalValueLockedUSD.plus(depositValueUsd);
   protocol.save();
 }
 
-export function createWithdrawal(event: Withdrawal): void {
-  let protocol = getOrCreateProtocol();
-  let pool = getOrCreatePool(event.address.toHexString(), event);
+export function createWithdrawal(poolAddress: string, event: Withdrawal): void {
+  let pool = getOrCreatePool(poolAddress, event);
   let inputToken = getOrCreateToken(
     Address.fromString(pool.inputTokens[0]),
     event.block.number
   );
-  let poolMetricsDaily = getOrCreatePoolDailySnapshot(event);
-  let poolMetricsHourly = getOrCreatePoolHourlySnapshot(event);
-  let financialMetricsDaily = getOrCreateFinancialsDailySnapshot(event);
 
-  pool.totalValueLockedUSD = pool.totalValueLockedUSD.minus(
-    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
+  let withdrawValueUsd = bigIntToBigDecimal(
+    pool._denomination,
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
+
+  let relayerFeeUsd = bigIntToBigDecimal(
+    event.params.fee,
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
+
+  let protocolFeeUsd = bigIntToBigDecimal(pool._fee, inputToken.decimals).times(
+    inputToken.lastPriceUSD!
   );
-  pool.cumulativeTotalRevenueUSD = pool.cumulativeTotalRevenueUSD.plus(
-    bigIntToBigDecimal(event.params.fee)
-  );
+
+  pool.totalValueLockedUSD = pool.totalValueLockedUSD.minus(withdrawValueUsd);
+  pool.cumulativeTotalRevenueUSD =
+    pool.cumulativeTotalRevenueUSD.plus(relayerFeeUsd);
   pool.cumulativeProtocolSideRevenueUSD =
-    pool.cumulativeProtocolSideRevenueUSD.plus(
-      bigIntToBigDecimal(pool._fee.times(pool._denomination))
-    );
+    pool.cumulativeProtocolSideRevenueUSD.plus(protocolFeeUsd);
   pool.cumulativeSupplySideRevenueUSD =
     pool.cumulativeSupplySideRevenueUSD.plus(
       pool.cumulativeTotalRevenueUSD.minus(
@@ -80,44 +87,38 @@ export function createWithdrawal(event: Withdrawal): void {
   ];
   pool.save();
 
+  let poolMetricsDaily = getOrCreatePoolDailySnapshot(event);
+
   poolMetricsDaily.dailyTotalRevenueUSD =
-    poolMetricsDaily.dailyTotalRevenueUSD.plus(
-      bigIntToBigDecimal(event.params.fee)
-    );
+    poolMetricsDaily.dailyTotalRevenueUSD.plus(relayerFeeUsd);
   poolMetricsDaily.dailyProtocolSideRevenueUSD =
-    poolMetricsDaily.dailyProtocolSideRevenueUSD.plus(
-      bigIntToBigDecimal(pool._fee.times(pool._denomination))
-    );
+    poolMetricsDaily.dailyProtocolSideRevenueUSD.plus(protocolFeeUsd);
   poolMetricsDaily.dailySupplySideRevenueUSD =
     poolMetricsDaily.dailyTotalRevenueUSD.minus(
       poolMetricsDaily.dailyProtocolSideRevenueUSD
     );
   poolMetricsDaily.save();
 
+  let poolMetricsHourly = getOrCreatePoolHourlySnapshot(event);
+
   poolMetricsHourly.hourlyTotalRevenueUSD =
-    poolMetricsHourly.hourlyTotalRevenueUSD.plus(
-      bigIntToBigDecimal(event.params.fee)
-    );
+    poolMetricsHourly.hourlyTotalRevenueUSD.plus(relayerFeeUsd);
   poolMetricsHourly.hourlyProtocolSideRevenueUSD =
-    poolMetricsHourly.hourlyProtocolSideRevenueUSD.plus(
-      bigIntToBigDecimal(pool._fee.times(pool._denomination))
-    );
+    poolMetricsHourly.hourlyProtocolSideRevenueUSD.plus(protocolFeeUsd);
   poolMetricsHourly.hourlySupplySideRevenueUSD =
     poolMetricsHourly.hourlyTotalRevenueUSD.minus(
-      poolMetricsDaily.dailyProtocolSideRevenueUSD
+      poolMetricsHourly.hourlyProtocolSideRevenueUSD
     );
   poolMetricsHourly.save();
 
-  protocol.totalValueLockedUSD = protocol.totalValueLockedUSD.minus(
-    bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
-  );
-  protocol.cumulativeTotalRevenueUSD = protocol.cumulativeTotalRevenueUSD.plus(
-    bigIntToBigDecimal(event.params.fee)
-  );
+  let protocol = getOrCreateProtocol();
+
+  protocol.totalValueLockedUSD =
+    protocol.totalValueLockedUSD.minus(withdrawValueUsd);
+  protocol.cumulativeTotalRevenueUSD =
+    protocol.cumulativeTotalRevenueUSD.plus(relayerFeeUsd);
   protocol.cumulativeProtocolSideRevenueUSD =
-    protocol.cumulativeProtocolSideRevenueUSD.plus(
-      bigIntToBigDecimal(pool._fee.times(pool._denomination))
-    );
+    protocol.cumulativeProtocolSideRevenueUSD.plus(protocolFeeUsd);
   protocol.cumulativeSupplySideRevenueUSD =
     protocol.cumulativeSupplySideRevenueUSD.plus(
       pool.cumulativeTotalRevenueUSD.minus(
@@ -126,14 +127,12 @@ export function createWithdrawal(event: Withdrawal): void {
     );
   protocol.save();
 
+  let financialMetricsDaily = getOrCreateFinancialsDailySnapshot(event);
+
   financialMetricsDaily.dailyTotalRevenueUSD =
-    financialMetricsDaily.dailyTotalRevenueUSD.plus(
-      bigIntToBigDecimal(pool._denomination).times(inputToken.lastPriceUSD!)
-    );
+    financialMetricsDaily.dailyTotalRevenueUSD.plus(relayerFeeUsd);
   financialMetricsDaily.dailyProtocolSideRevenueUSD =
-    financialMetricsDaily.dailyProtocolSideRevenueUSD.plus(
-      bigIntToBigDecimal(event.params.fee)
-    );
+    financialMetricsDaily.dailyProtocolSideRevenueUSD.plus(protocolFeeUsd);
   financialMetricsDaily.dailySupplySideRevenueUSD =
     financialMetricsDaily.dailyTotalRevenueUSD.minus(
       financialMetricsDaily.dailyProtocolSideRevenueUSD
@@ -141,17 +140,19 @@ export function createWithdrawal(event: Withdrawal): void {
   financialMetricsDaily.save();
 }
 
-export function createFeeUpdated(event: FeeUpdated): void {
-  let pool = getOrCreatePool(event.params.instance.toHexString(), event);
+export function createFeeUpdated(poolAddress: string, event: FeeUpdated): void {
+  let pool = getOrCreatePool(poolAddress, event);
 
   pool._fee = event.params.newFee;
-
   pool.save();
 }
 
-export function createRateChanged(event: RateChanged): void {
-  let pool = getOrCreatePool(event.params.instance.toHexString(), event);
-  let rewardToken = getOrCreateRewardToken(
+export function createRateChanged(
+  poolAddress: string,
+  event: RateChanged
+): void {
+  let pool = getOrCreatePool(poolAddress, event);
+  let rewardToken = getOrCreateToken(
     Address.fromString(TORN_ADDRESS),
     event.block.number
   );
@@ -159,39 +160,41 @@ export function createRateChanged(event: RateChanged): void {
   let rewardsPerDay = getRewardsPerDay(
     event.block.timestamp,
     event.block.number,
-    bigIntToBigDecimal(event.params.value),
+    bigIntToBigDecimal(event.params.value, rewardToken.decimals),
     RewardIntervalType.BLOCK
   );
 
-  pool.rewardTokenEmissionsAmount = [bigDecimalToBigInt(rewardsPerDay)];
-  pool.rewardTokenEmissionsUSD = [
-    getUsdPrice(
-      Address.fromString(rewardToken.id.split("-")[1]),
-      rewardsPerDay
-    ),
+  pool.rewardTokenEmissionsAmount = [
+    BigInt.fromString(roundToWholeNumber(rewardsPerDay).toString()),
   ];
-
+  pool.rewardTokenEmissionsUSD = [
+    bigIntToBigDecimal(
+      pool.rewardTokenEmissionsAmount![0],
+      rewardToken.decimals
+    ).times(rewardToken.lastPriceUSD!),
+  ];
   pool.save();
 }
 
 export function createRewardSwap(event: Swap): void {
-  let rewardToken = getOrCreateRewardToken(
+  let protocol = getOrCreateProtocol();
+  let rewardToken = getOrCreateToken(
     Address.fromString(TORN_ADDRESS),
     event.block.number
   );
 
-  let protocol = getOrCreateProtocol();
   let pools = protocol.pools;
   for (let i = 0; i < pools.length; i++) {
     let pool = getOrCreatePool(pools[i], event);
 
     pool.rewardTokenEmissionsUSD = [
-      getUsdPrice(
-        Address.fromString(rewardToken.id.split("-")[1]),
-        bigIntToBigDecimal(pool.rewardTokenEmissionsAmount![0])
-      ),
+      bigIntToBigDecimal(
+        pool.rewardTokenEmissionsAmount![0],
+        rewardToken.decimals
+      ).times(rewardToken.lastPriceUSD!),
     ];
-
     pool.save();
+
+    updatePoolMetrics(pools[i], event);
   }
 }
