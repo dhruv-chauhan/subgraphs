@@ -5,26 +5,26 @@
     {
       "name": "TornadoCash01BNB",
       "address": "0x84443CFd09A48AF6eF360C6976C5392aC5023a1F",
-      "abi": "TornadoCashERC20",
-      "startBlock": 16212631
+      "abi": "TornadoCashBNB",
+      "startBlock": 8159279
     },
     {
       "name": "TornadoCash1BNB",
       "address": "0xd47438C816c9E7f2E2888E060936a499Af9582b3",
-      "abi": "TornadoCashERC20",
-      "startBlock": 12999211
+      "abi": "TornadoCashBNB",
+      "startBlock": 8159286
     },
     {
       "name": "TornadoCash10BNB",
       "address": "0x330bdFADE01eE9bF63C209Ee33102DD334618e0a",
-      "abi": "TornadoCashERC20",
-      "startBlock": 15452617
+      "abi": "TornadoCashBNB",
+      "startBlock": 8159290
     },
     {
       "name": "TornadoCash100BNB",
       "address": "0x1E34A77868E19A6647b1f2F47B51ed72dEDE95DD",
-      "abi": "TornadoCashERC20",
-      "startBlock": 13218870
+      "abi": "TornadoCashBNB",
+      "startBlock": 8159296
     }
   ]
 }

@@ -124,8 +124,7 @@ export function getPriceFromRouter(
 
     return CustomPriceType.initialize(
       amountOutBigDecimal,
-      6
-      // constants.USDC_DECIMALS_MAP.get(network)!
+      constants.USDC_DECIMALS_MAP.get(network)!.toI32() as u8
     );
   }
 

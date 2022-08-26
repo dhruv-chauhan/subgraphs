@@ -1,4 +1,4 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   getOrCreateProtocol,
@@ -13,8 +13,7 @@ import {
   roundToWholeNumber,
 } from "../common/utils/numbers";
 import { getRewardsPerDay, RewardIntervalType } from "../common/rewards";
-import { TORN_ADDRESS } from "../common/constants";
-import { getUsdPrice } from "../prices";
+import { TORN_ADDRESS_ETH } from "../common/constants";
 import { updatePoolMetrics } from "../common/metrics";
 
 import {
@@ -32,16 +31,19 @@ export function createDeposit(poolAddress: string, event: Deposit): void {
     event.block.number
   );
 
+  pool.inputTokenBalances = [
+    pool.inputTokenBalances[0].plus(pool._denomination),
+  ];
+  pool.totalValueLockedUSD = bigIntToBigDecimal(
+    pool.inputTokenBalances[0],
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
+  pool.save();
+
   let depositValueUsd = bigIntToBigDecimal(
     pool._denomination,
     inputToken.decimals
   ).times(inputToken.lastPriceUSD!);
-
-  pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(depositValueUsd);
-  pool.inputTokenBalances = [
-    pool.inputTokenBalances[0].plus(pool._denomination),
-  ];
-  pool.save();
 
   let protocol = getOrCreateProtocol();
 
@@ -57,11 +59,6 @@ export function createWithdrawal(poolAddress: string, event: Withdrawal): void {
     event.block.number
   );
 
-  let withdrawValueUsd = bigIntToBigDecimal(
-    pool._denomination,
-    inputToken.decimals
-  ).times(inputToken.lastPriceUSD!);
-
   let relayerFeeUsd = bigIntToBigDecimal(
     event.params.fee,
     inputToken.decimals
@@ -71,7 +68,13 @@ export function createWithdrawal(poolAddress: string, event: Withdrawal): void {
     inputToken.lastPriceUSD!
   );
 
-  pool.totalValueLockedUSD = pool.totalValueLockedUSD.minus(withdrawValueUsd);
+  pool.inputTokenBalances = [
+    pool.inputTokenBalances[0].minus(pool._denomination),
+  ];
+  pool.totalValueLockedUSD = bigIntToBigDecimal(
+    pool.inputTokenBalances[0],
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
   pool.cumulativeTotalRevenueUSD =
     pool.cumulativeTotalRevenueUSD.plus(relayerFeeUsd);
   pool.cumulativeProtocolSideRevenueUSD =
@@ -82,9 +85,6 @@ export function createWithdrawal(poolAddress: string, event: Withdrawal): void {
         pool.cumulativeProtocolSideRevenueUSD
       )
     );
-  pool.inputTokenBalances = [
-    pool.inputTokenBalances[0].minus(pool._denomination),
-  ];
   pool.save();
 
   let poolMetricsDaily = getOrCreatePoolDailySnapshot(event);
@@ -110,6 +110,11 @@ export function createWithdrawal(poolAddress: string, event: Withdrawal): void {
       poolMetricsHourly.hourlyProtocolSideRevenueUSD
     );
   poolMetricsHourly.save();
+
+  let withdrawValueUsd = bigIntToBigDecimal(
+    pool._denomination,
+    inputToken.decimals
+  ).times(inputToken.lastPriceUSD!);
 
   let protocol = getOrCreateProtocol();
 
@@ -153,7 +158,7 @@ export function createRateChanged(
 ): void {
   let pool = getOrCreatePool(poolAddress, event);
   let rewardToken = getOrCreateToken(
-    Address.fromString(TORN_ADDRESS),
+    Address.fromString(TORN_ADDRESS_ETH),
     event.block.number
   );
 
@@ -179,7 +184,7 @@ export function createRateChanged(
 export function createRewardSwap(event: Swap): void {
   let protocol = getOrCreateProtocol();
   let rewardToken = getOrCreateToken(
-    Address.fromString(TORN_ADDRESS),
+    Address.fromString(TORN_ADDRESS_ETH),
     event.block.number
   );
 

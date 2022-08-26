@@ -1,4 +1,10 @@
-import { Address, ethereum, BigInt } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  ethereum,
+  BigInt,
+  dataSource,
+  log,
+} from "@graphprotocol/graph-ts";
 
 import { fetchTokenSymbol, fetchTokenName, fetchTokenDecimals } from "./tokens";
 import {
@@ -20,10 +26,15 @@ import {
   ETH_NAME,
   ETH_SYMBOL,
   ETH_DECIMALS,
-  TORN_ADDRESS,
+  TORN_ADDRESS_ETH,
+  TORN_ADDRESS_BNB,
   TORN_NAME,
   TORN_SYMBOL,
   TORN_DECIMALS,
+  BNB_ADDRESS,
+  BNB_DECIMALS,
+  BNB_NAME,
+  BNB_SYMBOL,
 } from "./constants";
 import { getUsdPricePerToken } from "../prices";
 import { addToArrayAtIndex } from "../common/utils/arrays";
@@ -31,6 +42,7 @@ import { bigIntToBigDecimal } from "./utils/numbers";
 
 import { TornadoCashETH } from "../../generated/TornadoCashMiner/TornadoCashETH";
 import { TornadoCashERC20 } from "../../generated/TornadoCashMiner/TornadoCashERC20";
+import { TornadoCashBNB } from "../../generated/TornadoCash01BNB/TornadoCashBNB";
 import {
   Protocol,
   Pool,
@@ -53,7 +65,7 @@ export function getOrCreateProtocol(): Protocol {
     protocol.schemaVersion = PROTOCOL_SCHEMA_VERSION;
     protocol.subgraphVersion = PROTOCOL_SUBGRAPH_VERSION;
     protocol.methodologyVersion = PROTOCOL_METHODOLOGY_VERSION;
-    protocol.network = Network.MAINNET;
+    protocol.network = dataSource.network().toUpperCase();
     protocol.type = ProtocolType.GENERIC;
     protocol.totalValueLockedUSD = BIGDECIMAL_ZERO;
     protocol.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -82,20 +94,26 @@ export function getOrCreateToken(
       token.name = ETH_NAME;
       token.symbol = ETH_SYMBOL;
       token.decimals = ETH_DECIMALS;
-    } else if (tokenAddress == Address.fromString(TORN_ADDRESS)) {
+    } else if (
+      tokenAddress == Address.fromString(TORN_ADDRESS_ETH) ||
+      tokenAddress == Address.fromString(TORN_ADDRESS_BNB)
+    ) {
       token.name = TORN_NAME;
       token.symbol = TORN_SYMBOL;
       token.decimals = TORN_DECIMALS;
+    } else if (tokenAddress == Address.fromString(BNB_ADDRESS)) {
+      token.name = BNB_NAME;
+      token.symbol = BNB_SYMBOL;
+      token.decimals = BNB_DECIMALS;
     } else {
       token.name = fetchTokenName(tokenAddress);
       token.symbol = fetchTokenSymbol(tokenAddress);
       token.decimals = fetchTokenDecimals(tokenAddress) as i32;
     }
-    token.lastPriceUSD = BIGDECIMAL_ZERO;
     token.lastPriceBlockNumber = blockNumber;
   }
 
-  if (token.lastPriceBlockNumber! < blockNumber) {
+  if (!token.lastPriceUSD || token.lastPriceBlockNumber! < blockNumber) {
     let price = getUsdPricePerToken(tokenAddress, blockNumber);
     if (price.reverted) {
       token.lastPriceUSD = BIGDECIMAL_ZERO;
@@ -166,13 +184,29 @@ export function getOrCreatePool(
       }
       pool.inputTokens = [token.id];
     } else {
+      let network = dataSource.network().toUpperCase();
+      let tokenAddr: string;
+      let denomination_call: ethereum.CallResult<BigInt>;
+
+      if (network == Network.BSC) {
+        tokenAddr = BNB_ADDRESS;
+        let contractTCBNB = TornadoCashBNB.bind(
+          Address.fromString(poolAddress)
+        );
+        denomination_call = contractTCBNB.try_denomination();
+      } else {
+        tokenAddr = ETH_ADDRESS;
+        let contractTCETH = TornadoCashETH.bind(
+          Address.fromString(poolAddress)
+        );
+        denomination_call = contractTCETH.try_denomination();
+      }
+
       let token = getOrCreateToken(
-        Address.fromString(ETH_ADDRESS),
+        Address.fromString(tokenAddr),
         event.block.number
       );
 
-      let contractTCETH = TornadoCashETH.bind(Address.fromString(poolAddress));
-      let denomination_call = contractTCETH.try_denomination();
       if (!denomination_call.reverted) {
         let denomination = denomination_call.value;
 
@@ -188,16 +222,23 @@ export function getOrCreatePool(
       pool.inputTokens = [token.id];
     }
 
-    pool.protocol = protocol.id;
-    pool._fee = BIGINT_ZERO;
+    let rewardTokenAddr: string;
+    if (dataSource.network().toUpperCase() == Network.BSC) {
+      rewardTokenAddr = TORN_ADDRESS_BNB;
+    } else {
+      rewardTokenAddr = TORN_ADDRESS_ETH;
+    }
     pool.rewardTokens = [
       getOrCreateRewardToken(
-        Address.fromString(TORN_ADDRESS),
+        Address.fromString(rewardTokenAddr),
         event.block.number
       ).id,
     ];
     pool.rewardTokenEmissionsAmount = [BIGINT_ZERO];
     pool.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
+
+    pool.protocol = protocol.id;
+    pool._fee = BIGINT_ZERO;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
     pool.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
     pool.cumulativeProtocolSideRevenueUSD = BIGDECIMAL_ZERO;

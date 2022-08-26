@@ -108,7 +108,14 @@ export const MS_PER_YEAR = DAYS_PER_YEAR.times(
 /////////////////////////////
 
 export const FACTORY_ADDRESS = "0xCEe71753C9820f063b38FDbE4cFDAf1d3D928A80";
-export const TORN_ADDRESS = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
+
+export const TORN_ADDRESS_ETH = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
+export const TORN_ADDRESS_BNB = "0x1ba8d3c4c219b124d351f603060663bd1bcd9bbf";
 export const TORN_NAME = "TornadoCash";
 export const TORN_SYMBOL = "TORN";
 export const TORN_DECIMALS = 18;
+
+export const BNB_ADDRESS = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52";
+export const BNB_NAME = "BNB";
+export const BNB_SYMBOL = "BNB";
+export const BNB_DECIMALS = 18;

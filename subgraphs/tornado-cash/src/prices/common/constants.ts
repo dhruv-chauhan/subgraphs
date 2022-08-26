@@ -328,7 +328,7 @@ UNISWAP_cDAI_CONTRACT_ADDRESS.set(
 ///////////////////////////////// HELPERS /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-export const USDC_DECIMALS_MAP = new TypedMap<string, i32>();
+export const USDC_DECIMALS_MAP = new TypedMap<string, BigInt>();
 USDC_DECIMALS_MAP.set(MAINNET.NETWORK_STRING, MAINNET.USDC_DECIMALS);
 USDC_DECIMALS_MAP.set(BSC.NETWORK_STRING, BSC.USDC_DECIMALS);
 USDC_DECIMALS_MAP.set(FANTOM.NETWORK_STRING, FANTOM.USDC_DECIMALS);

@@ -3,6 +3,7 @@ repository: https://github.com/messari/subgraphs
 schema:
   file: ./schema.graphql
 dataSources:
+  {{#network=mainnet}}
   - kind: ethereum/contract
     name: TornadoCashRewardSwap
     network: {{ network }}
@@ -278,6 +279,7 @@ dataSources:
       eventHandlers:
         - event: RewardsClaimed(indexed address,uint256)
           handler: handleStakingRewardsClaimed
+  {{/network=mainnet}}
 
   {{#pools}}
   - kind: ethereum/contract
@@ -301,6 +303,8 @@ dataSources:
           file: ./abis/TornadoCashETH.json
         - name: TornadoCashERC20
           file: ./abis/TornadoCashERC20.json
+        - name: TornadoCashBNB
+          file: ./abis/TornadoCashBNB.json
 
         - name: ERC20
           file: ./abis/ERC20.json
