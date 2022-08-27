@@ -1,6 +1,7 @@
 {
   "deployment": "TORNADOCASH_MAINNET",
   "network": "mainnet",
+  "isNetworkMainnet": true,
   "pools": [
     {
       "name": "TornadoCash01ETH",
@@ -42,7 +43,7 @@
       "name": "TornadoCash10000DAI",
       "address": "0x07687e702b410Fa43f4cB4Af7FA097918ffD2730",
       "abi": "TornadoCashERC20",
-      "startBlock": 14401271
+      "startBlock": 12066007
     },
     {
       "name": "TornadoCash100000DAI",
@@ -60,13 +61,13 @@
       "name": "TornadoCash50000cDAI",
       "address": "0x03893a7c7463AE47D46bc7f091665f1893656003",
       "abi": "TornadoCashERC20",
-      "startBlock": 12069037
+      "startBlock": 12067606
     },
     {
       "name": "TornadoCash500000cDAI",
       "address": "0x2717c5e28cf931547B621a5dddb772Ab6A35B701",
       "abi": "TornadoCashERC20",
-      "startBlock": 12067606
+      "startBlock": 12066053
     },
     {
       "name": "TornadoCash5000000cDAI",
@@ -114,7 +115,7 @@
       "name": "TornadoCash10WBTC",
       "address": "0xbB93e510BbCD0B7beb5A853875f9eC60275CF498",
       "abi": "TornadoCashERC20",
-      "startBlock": 13655652
+      "startBlock": 12067591
     }
   ]
 }

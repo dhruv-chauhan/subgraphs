@@ -26,8 +26,7 @@ import {
   ETH_NAME,
   ETH_SYMBOL,
   ETH_DECIMALS,
-  TORN_ADDRESS_ETH,
-  TORN_ADDRESS_BNB,
+  TORN_ADDRESS,
   TORN_NAME,
   TORN_SYMBOL,
   TORN_DECIMALS,
@@ -56,16 +55,17 @@ import {
 } from "../../generated/schema";
 
 export function getOrCreateProtocol(): Protocol {
-  let protocol = Protocol.load(FACTORY_ADDRESS);
+  let network = dataSource.network().toUpperCase();
+  let protocol = Protocol.load(FACTORY_ADDRESS.get(network)!.toHexString());
 
   if (!protocol) {
-    protocol = new Protocol(FACTORY_ADDRESS);
+    protocol = new Protocol(FACTORY_ADDRESS.get(network)!.toHexString());
     protocol.name = PROTOCOL_NAME;
     protocol.slug = PROTOCOL_SLUG;
     protocol.schemaVersion = PROTOCOL_SCHEMA_VERSION;
     protocol.subgraphVersion = PROTOCOL_SUBGRAPH_VERSION;
     protocol.methodologyVersion = PROTOCOL_METHODOLOGY_VERSION;
-    protocol.network = dataSource.network().toUpperCase();
+    protocol.network = network;
     protocol.type = ProtocolType.GENERIC;
     protocol.totalValueLockedUSD = BIGDECIMAL_ZERO;
     protocol.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -89,15 +89,13 @@ export function getOrCreateToken(
 
   if (!token) {
     token = new Token(tokenAddress.toHexString());
+    let network = dataSource.network().toUpperCase();
 
     if (tokenAddress == Address.fromString(ETH_ADDRESS)) {
       token.name = ETH_NAME;
       token.symbol = ETH_SYMBOL;
       token.decimals = ETH_DECIMALS;
-    } else if (
-      tokenAddress == Address.fromString(TORN_ADDRESS_ETH) ||
-      tokenAddress == Address.fromString(TORN_ADDRESS_BNB)
-    ) {
+    } else if (tokenAddress == TORN_ADDRESS.get(network)!) {
       token.name = TORN_NAME;
       token.symbol = TORN_SYMBOL;
       token.decimals = TORN_DECIMALS;
@@ -158,8 +156,6 @@ export function getOrCreatePool(
   let pool = Pool.load(poolAddress);
 
   if (!pool) {
-    let protocol = getOrCreateProtocol();
-
     pool = new Pool(poolAddress);
 
     let contractTCERC20 = TornadoCashERC20.bind(
@@ -222,22 +218,15 @@ export function getOrCreatePool(
       pool.inputTokens = [token.id];
     }
 
-    let rewardTokenAddr: string;
-    if (dataSource.network().toUpperCase() == Network.BSC) {
-      rewardTokenAddr = TORN_ADDRESS_BNB;
-    } else {
-      rewardTokenAddr = TORN_ADDRESS_ETH;
-    }
+    let network = dataSource.network().toUpperCase();
+
     pool.rewardTokens = [
-      getOrCreateRewardToken(
-        Address.fromString(rewardTokenAddr),
-        event.block.number
-      ).id,
+      getOrCreateRewardToken(TORN_ADDRESS.get(network)!, event.block.number).id,
     ];
     pool.rewardTokenEmissionsAmount = [BIGINT_ZERO];
     pool.rewardTokenEmissionsUSD = [BIGDECIMAL_ZERO];
 
-    pool.protocol = protocol.id;
+    pool.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     pool._fee = BIGINT_ZERO;
     pool.totalValueLockedUSD = BIGDECIMAL_ZERO;
     pool.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -247,6 +236,8 @@ export function getOrCreatePool(
     pool.createdTimestamp = event.block.timestamp;
     pool.createdBlockNumber = event.block.number;
     pool.save();
+
+    let protocol = getOrCreateProtocol();
 
     protocol.pools = addToArrayAtIndex<string>(protocol.pools, pool.id);
     protocol.totalPoolCount = protocol.totalPoolCount + 1;
@@ -270,7 +261,9 @@ export function getOrCreatePoolDailySnapshot(
     poolMetrics = new PoolDailySnapshot(
       event.address.toHexString().concat("-").concat(dayId)
     );
-    poolMetrics.protocol = FACTORY_ADDRESS;
+
+    let network = dataSource.network().toUpperCase();
+    poolMetrics.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     poolMetrics.pool = event.address.toHexString();
     poolMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
     poolMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -306,7 +299,9 @@ export function getOrCreatePoolHourlySnapshot(
     poolMetrics = new PoolHourlySnapshot(
       event.address.toHexString().concat("-").concat(dayId)
     );
-    poolMetrics.protocol = FACTORY_ADDRESS;
+
+    let network = dataSource.network().toUpperCase();
+    poolMetrics.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     poolMetrics.pool = event.address.toHexString();
     poolMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
     poolMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
@@ -339,7 +334,9 @@ export function getOrCreateUsageMetricDailySnapshot(
 
   if (!usageMetrics) {
     usageMetrics = new UsageMetricsDailySnapshot(dayId);
-    usageMetrics.protocol = FACTORY_ADDRESS;
+
+    let network = dataSource.network().toUpperCase();
+    usageMetrics.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     usageMetrics.dailyActiveUsers = INT_ZERO;
     usageMetrics.cumulativeUniqueUsers = INT_ZERO;
     usageMetrics.dailyTransactionCount = INT_ZERO;
@@ -364,7 +361,9 @@ export function getOrCreateUsageMetricHourlySnapshot(
 
   if (!usageMetrics) {
     usageMetrics = new UsageMetricsHourlySnapshot(hourId);
-    usageMetrics.protocol = FACTORY_ADDRESS;
+
+    let network = dataSource.network().toUpperCase();
+    usageMetrics.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     usageMetrics.hourlyActiveUsers = INT_ZERO;
     usageMetrics.cumulativeUniqueUsers = INT_ZERO;
     usageMetrics.hourlyTransactionCount = INT_ZERO;
@@ -388,7 +387,9 @@ export function getOrCreateFinancialsDailySnapshot(
 
   if (!financialMetrics) {
     financialMetrics = new FinancialsDailySnapshot(id);
-    financialMetrics.protocol = FACTORY_ADDRESS;
+
+    let network = dataSource.network().toUpperCase();
+    financialMetrics.protocol = FACTORY_ADDRESS.get(network)!.toHexString();
     financialMetrics.totalValueLockedUSD = BIGDECIMAL_ZERO;
     financialMetrics.cumulativeSupplySideRevenueUSD = BIGDECIMAL_ZERO;
     financialMetrics.dailySupplySideRevenueUSD = BIGDECIMAL_ZERO;

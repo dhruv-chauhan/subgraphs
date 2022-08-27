@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, TypedMap } from "@graphprotocol/graph-ts";
 
 ////////////////////
 ///// Versions /////
@@ -6,9 +6,9 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 export const PROTOCOL_NAME = "Tornado Cash Classic";
 export const PROTOCOL_SLUG = "tornado-cash";
-export const PROTOCOL_SCHEMA_VERSION = "1.3.0";
+export const PROTOCOL_SCHEMA_VERSION = "1.0.0";
 export const PROTOCOL_SUBGRAPH_VERSION = "1.0.0";
-export const PROTOCOL_METHODOLOGY_VERSION = "1.1.0";
+export const PROTOCOL_METHODOLOGY_VERSION = "1.0.0";
 
 ////////////////////////
 ///// Schema Enums /////
@@ -107,15 +107,30 @@ export const MS_PER_YEAR = DAYS_PER_YEAR.times(
 ///// Protocol Specific /////
 /////////////////////////////
 
-export const FACTORY_ADDRESS = "0xCEe71753C9820f063b38FDbE4cFDAf1d3D928A80";
+export const FACTORY_ADDRESS = new TypedMap<string, Address>();
+FACTORY_ADDRESS.set(
+  Network.MAINNET,
+  Address.fromString("0x8589427373D6D84E98730D7795D8f6f8731FDA16")
+);
+FACTORY_ADDRESS.set(
+  Network.BSC,
+  Address.fromString("0xce0042B868300000d44A59004Da54A005ffdcf9f")
+);
 
-export const TORN_ADDRESS_ETH = "0x77777FeDdddFfC19Ff86DB637967013e6C6A116C";
-export const TORN_ADDRESS_BNB = "0x1ba8d3c4c219b124d351f603060663bd1bcd9bbf";
+export const TORN_ADDRESS = new TypedMap<string, Address>();
+TORN_ADDRESS.set(
+  Network.MAINNET,
+  Address.fromString("0x77777FeDdddFfC19Ff86DB637967013e6C6A116C")
+);
+TORN_ADDRESS.set(
+  Network.BSC,
+  Address.fromString("0x1ba8d3c4c219b124d351f603060663bd1bcd9bbf")
+);
 export const TORN_NAME = "TornadoCash";
 export const TORN_SYMBOL = "TORN";
 export const TORN_DECIMALS = 18;
 
-export const BNB_ADDRESS = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52";
+export const BNB_ADDRESS = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
 export const BNB_NAME = "BNB";
 export const BNB_SYMBOL = "BNB";
 export const BNB_DECIMALS = 18;

@@ -1,6 +1,7 @@
 {
   "deployment": "TORNADOCASH_BSC",
   "network": "bsc",
+  "isNetworkMainnet": false,
   "pools": [
     {
       "name": "TornadoCash01BNB",

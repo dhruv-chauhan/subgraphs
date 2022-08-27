@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 
 import {
   getOrCreateProtocol,
@@ -13,7 +13,7 @@ import {
   roundToWholeNumber,
 } from "../common/utils/numbers";
 import { getRewardsPerDay, RewardIntervalType } from "../common/rewards";
-import { TORN_ADDRESS_ETH } from "../common/constants";
+import { TORN_ADDRESS } from "../common/constants";
 import { updatePoolMetrics } from "../common/metrics";
 
 import {
@@ -157,8 +157,10 @@ export function createRateChanged(
   event: RateChanged
 ): void {
   let pool = getOrCreatePool(poolAddress, event);
+
+  let network = dataSource.network().toUpperCase();
   let rewardToken = getOrCreateToken(
-    Address.fromString(TORN_ADDRESS_ETH),
+    TORN_ADDRESS.get(network)!,
     event.block.number
   );
 
@@ -183,8 +185,10 @@ export function createRateChanged(
 
 export function createRewardSwap(event: Swap): void {
   let protocol = getOrCreateProtocol();
+
+  let network = dataSource.network().toUpperCase();
   let rewardToken = getOrCreateToken(
-    Address.fromString(TORN_ADDRESS_ETH),
+    TORN_ADDRESS.get(network)!,
     event.block.number
   );
 
