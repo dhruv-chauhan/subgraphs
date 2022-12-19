@@ -1,4 +1,4 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 
 import {
   getOrCreateToken,
@@ -34,24 +34,18 @@ import {
   createWithdrawTransaction,
 } from "../common/transactions";
 import { CustomFeesType } from "../common/types";
-import { NetworkConfigs } from "../../configurations/configure";
 
-import {
-  PoolAdded,
-  Deposited,
-  Withdrawn,
-  FeesUpdated,
-  PoolShutdown,
-} from "../../generated/Booster/Booster";
-import { ERC20 } from "../../generated/Booster/ERC20";
-import { BaseRewardPool } from "../../generated/Booster/BaseRewardPool";
-import { RewardAdded } from "../../generated/Booster/BaseRewardPool";
+import { ERC20 } from "../../generated/Booster-v1/ERC20";
+import { BaseRewardPool } from "../../generated/Booster-v1/BaseRewardPool";
 
-export function createPoolAdd(event: PoolAdded): void {
+export function createPoolAdd(
+  boosterAddr: Address,
+  poolId: BigInt,
+  block: ethereum.Block
+): void {
   const protocol = getOrCreateYieldAggregator();
 
-  const poolId = event.params.pid;
-  const vault = getOrCreateVault(poolId, event);
+  const vault = getOrCreateVault(boosterAddr, poolId, block);
   if (!vault) return;
 
   protocol.totalPoolCount += 1;
@@ -61,11 +55,14 @@ export function createPoolAdd(event: PoolAdded): void {
   protocol.save();
 }
 
-export function createPoolShutdown(event: PoolShutdown): void {
+export function createPoolShutdown(
+  boosterAddr: Address,
+  poolId: BigInt,
+  block: ethereum.Block
+): void {
   const protocol = getOrCreateYieldAggregator();
 
-  const poolId = event.params.poolId;
-  const vault = getOrCreateVault(poolId, event);
+  const vault = getOrCreateVault(boosterAddr, poolId, block);
   if (!vault) return;
 
   vault._active = false;
@@ -76,16 +73,22 @@ export function createPoolShutdown(event: PoolShutdown): void {
   protocol.save();
 }
 
-export function createDeposit(poolId: BigInt, event: Deposited): void {
-  const vault = getOrCreateVault(poolId, event);
+export function createDeposit(
+  boosterAddr: Address,
+  poolId: BigInt,
+  amount: BigInt,
+  transaction: ethereum.Transaction,
+  block: ethereum.Block
+): void {
+  const vault = getOrCreateVault(boosterAddr, poolId, block);
   if (!vault) return;
 
   const inputToken = getOrCreateBalancerPoolToken(
     Address.fromString(vault.inputToken),
-    event.block.number
+    block.number
   );
 
-  const depositAmount = event.params.amount;
+  const depositAmount = amount;
   const depositAmountUSD = bigIntToBigDecimal(
     depositAmount,
     inputToken.decimals
@@ -99,7 +102,7 @@ export function createDeposit(poolId: BigInt, event: Deposited): void {
 
   const outputToken = getOrCreateToken(
     Address.fromString(vault.outputToken!),
-    event.block.number
+    block.number
   );
   const outputTokenContract = ERC20.bind(
     Address.fromString(vault.outputToken!)
@@ -129,22 +132,34 @@ export function createDeposit(poolId: BigInt, event: Deposited): void {
 
   vault.save();
 
-  createDepositTransaction(vault, depositAmount, depositAmountUSD, event);
+  createDepositTransaction(
+    vault,
+    depositAmount,
+    depositAmountUSD,
+    transaction,
+    block
+  );
 
   updateProtocolTotalValueLockedUSD();
-  updateUsageMetricsAfterDeposit(event);
+  updateUsageMetricsAfterDeposit(block);
 }
 
-export function createWithdraw(poolId: BigInt, event: Withdrawn): void {
-  const vault = getOrCreateVault(poolId, event);
+export function createWithdraw(
+  boosterAddr: Address,
+  poolId: BigInt,
+  amount: BigInt,
+  transaction: ethereum.Transaction,
+  block: ethereum.Block
+): void {
+  const vault = getOrCreateVault(boosterAddr, poolId, block);
   if (!vault) return;
 
   const inputToken = getOrCreateBalancerPoolToken(
     Address.fromString(vault.inputToken),
-    event.block.number
+    block.number
   );
 
-  const withdrawAmount = event.params.amount;
+  const withdrawAmount = amount;
   const withdrawAmountUSD = bigIntToBigDecimal(
     withdrawAmount,
     inputToken.decimals
@@ -158,7 +173,7 @@ export function createWithdraw(poolId: BigInt, event: Withdrawn): void {
 
   const outputToken = getOrCreateToken(
     Address.fromString(vault.outputToken!),
-    event.block.number
+    block.number
   );
   const outputTokenContract = ERC20.bind(
     Address.fromString(vault.outputToken!)
@@ -188,23 +203,35 @@ export function createWithdraw(poolId: BigInt, event: Withdrawn): void {
 
   vault.save();
 
-  createWithdrawTransaction(vault, withdrawAmount, withdrawAmountUSD, event);
+  createWithdrawTransaction(
+    vault,
+    withdrawAmount,
+    withdrawAmountUSD,
+    transaction,
+    block
+  );
 
   updateProtocolTotalValueLockedUSD();
-  updateUsageMetricsAfterWithdraw(event);
+  updateUsageMetricsAfterWithdraw(block);
 }
 
-export function createFeesUpdate(event: FeesUpdated): void {
+export function createFeesUpdate(
+  boosterAddr: Address,
+  lockIncentive: BigInt,
+  earmarkIncentive: BigInt,
+  stakerIncentive: BigInt,
+  platformFee: BigInt
+): void {
   const newFees = new CustomFeesType(
-    event.params.lockIncentive,
-    event.params.earmarkIncentive,
-    event.params.stakerIncentive,
-    event.params.platformFee
+    lockIncentive,
+    earmarkIncentive,
+    stakerIncentive,
+    platformFee
   );
 
   const performanceFeeId = prefixID(
     VaultFeeType.PERFORMANCE_FEE,
-    NetworkConfigs.getFactoryAddress()
+    boosterAddr.toHexString()
   );
 
   getOrCreateFeeType(
@@ -214,19 +241,23 @@ export function createFeesUpdate(event: FeesUpdated): void {
   );
 }
 
-export function createRewardAdd(poolId: BigInt, event: RewardAdded): void {
-  const rewardPoolAddr = event.address;
-  const rewardPool = getOrCreateRewardPool(poolId, rewardPoolAddr, event.block);
+export function createRewardAdd(
+  boosterAddr: Address,
+  poolId: BigInt,
+  rewardPoolAddr: Address,
+  block: ethereum.Block
+): void {
+  const rewardPool = getOrCreateRewardPool(poolId, rewardPoolAddr, block);
   const rewardsEarned = rewardPool.lastAddedRewards;
 
-  const fees = getFees();
+  const fees = getFees(boosterAddr);
   const totalFees = fees.totalFees();
 
   const totalRewardsEarned = rewardsEarned
     .toBigDecimal()
     .div(BIGDECIMAL_ONE.minus(totalFees));
 
-  const balToken = getOrCreateToken(BAL_TOKEN_ADDR, event.block.number);
+  const balToken = getOrCreateToken(BAL_TOKEN_ADDR, block.number);
 
   const totalRevenueUSD = totalRewardsEarned.times(balToken.lastPriceUSD!).div(
     BigInt.fromI32(10)
@@ -234,6 +265,6 @@ export function createRewardAdd(poolId: BigInt, event: RewardAdded): void {
       .toBigDecimal()
   );
 
-  updateRevenue(poolId, totalRevenueUSD, totalFees, event);
-  updateRewards(poolId, rewardPoolAddr, event);
+  updateRevenue(boosterAddr, poolId, totalRevenueUSD, totalFees, block);
+  updateRewards(boosterAddr, poolId, rewardPoolAddr, block);
 }

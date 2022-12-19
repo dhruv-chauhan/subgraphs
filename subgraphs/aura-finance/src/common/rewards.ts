@@ -12,7 +12,7 @@ import {
   dataSource,
   Address,
 } from "@graphprotocol/graph-ts";
-import { AuraToken } from "../../generated/Booster/AuraToken";
+import { AuraToken } from "../../generated/Booster-v1/AuraToken";
 import { _CircularBuffer } from "../../generated/schema";
 import { BIGINT_ZERO, Network } from "./constants";
 import {
@@ -192,9 +192,8 @@ export function getRewardsPerDay(
   );
 
   // Estimate block speed for the window in seconds.
-  const unnormalizedBlockSpeed = WINDOW_SIZE_SECONDS_BD.div(
-    windowSecondsCount
-  ).times(windowBlocksCount);
+  const unnormalizedBlockSpeed =
+    WINDOW_SIZE_SECONDS_BD.div(windowSecondsCount).times(windowBlocksCount);
 
   // block speed converted to specified rate.
   const normalizedBlockSpeed = RATE_IN_SECONDS_BD.div(

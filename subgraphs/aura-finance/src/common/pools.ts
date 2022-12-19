@@ -10,9 +10,9 @@ import { readValue } from "./utils/ethereum";
 import { PoolTokensType } from "./types";
 import { DEFAULT_DECIMALS } from "../prices/common/constants";
 
-import { BalancerVault } from "../../generated/Booster/BalancerVault";
-import { WeightedPool } from "../../generated/Booster/WeightedPool";
-import { StablePool } from "../../generated/Booster/StablePool";
+import { BalancerVault } from "../../generated/Booster-v1/BalancerVault";
+import { WeightedPool } from "../../generated/Booster-v1/WeightedPool";
+import { StablePool } from "../../generated/Booster-v1/StablePool";
 
 export function getPoolTokensInfo(poolAddress: Address): PoolTokensType {
   const poolContract = WeightedPool.bind(poolAddress);
@@ -97,10 +97,7 @@ export function getPoolTokenWeightsForDynamicWeightPools(
   const inputTokenWeights: BigDecimal[] = [];
   for (let idx = 0; idx < inputTokenScales.length; idx++) {
     inputTokenWeights.push(
-      inputTokenScales
-        .at(idx)
-        .divDecimal(totalScale)
-        .times(BIGDECIMAL_HUNDRED)
+      inputTokenScales.at(idx).divDecimal(totalScale).times(BIGDECIMAL_HUNDRED)
     );
   }
 

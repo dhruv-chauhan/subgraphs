@@ -1,13 +1,8 @@
-import {
-  Address,
-  BigDecimal,
-  BigInt,
-  Wrapped,
-} from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Wrapped } from "@graphprotocol/graph-ts";
 
 import { FEE_DENOMINATOR } from "../common/constants";
 
-import { Booster__poolInfoResult } from "../../generated/Booster/Booster";
+import { Booster__poolInfoResult } from "../../generated/Booster-v1/Booster";
 
 export class PoolInfoType {
   private _lpToken: Wrapped<Address>;

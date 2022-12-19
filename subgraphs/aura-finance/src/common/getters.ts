@@ -40,9 +40,9 @@ import {
   _RewardPool,
 } from "../../generated/schema";
 import { RewardPool as RewardPoolTemplate } from "../../generated/templates";
-import { BaseRewardPool } from "../../generated/Booster/BaseRewardPool";
-import { Booster } from "../../generated/Booster/Booster";
-import { StablePool } from "../../generated/Booster/StablePool";
+import { BaseRewardPool } from "../../generated/Booster-v1/BaseRewardPool";
+import { Booster } from "../../generated/Booster-v1/Booster";
+import { StablePool } from "../../generated/Booster-v1/StablePool";
 import { Versions } from "../versions";
 
 export function getOrCreateYieldAggregator(): YieldAggregator {
@@ -77,9 +77,9 @@ export function getOrCreateYieldAggregator(): YieldAggregator {
 }
 
 export function getOrCreateUsageMetricsDailySnapshot(
-  event: ethereum.Event
+  block: ethereum.Block
 ): UsageMetricsDailySnapshot {
-  const dayId = getDaysSinceEpoch(event.block.timestamp.toI32());
+  const dayId = getDaysSinceEpoch(block.timestamp.toI32());
   let usageMetrics = UsageMetricsDailySnapshot.load(dayId);
 
   if (!usageMetrics) {
@@ -95,8 +95,8 @@ export function getOrCreateUsageMetricsDailySnapshot(
     const protocol = getOrCreateYieldAggregator();
     usageMetrics.totalPoolCount = protocol.totalPoolCount;
 
-    usageMetrics.blockNumber = event.block.number;
-    usageMetrics.timestamp = event.block.timestamp;
+    usageMetrics.blockNumber = block.number;
+    usageMetrics.timestamp = block.timestamp;
 
     usageMetrics.save();
   }
@@ -105,9 +105,9 @@ export function getOrCreateUsageMetricsDailySnapshot(
 }
 
 export function getOrCreateUsageMetricsHourlySnapshot(
-  event: ethereum.Event
+  block: ethereum.Block
 ): UsageMetricsHourlySnapshot {
-  const hourId = getHoursSinceEpoch(event.block.timestamp.toI32());
+  const hourId = getHoursSinceEpoch(block.timestamp.toI32());
   let usageMetrics = UsageMetricsHourlySnapshot.load(hourId);
 
   if (!usageMetrics) {
@@ -120,8 +120,8 @@ export function getOrCreateUsageMetricsHourlySnapshot(
     usageMetrics.hourlyDepositCount = 0;
     usageMetrics.hourlyWithdrawCount = 0;
 
-    usageMetrics.blockNumber = event.block.number;
-    usageMetrics.timestamp = event.block.timestamp;
+    usageMetrics.blockNumber = block.number;
+    usageMetrics.timestamp = block.timestamp;
 
     usageMetrics.save();
   }
@@ -130,9 +130,9 @@ export function getOrCreateUsageMetricsHourlySnapshot(
 }
 
 export function getOrCreateFinancialDailySnapshots(
-  event: ethereum.Event
+  block: ethereum.Block
 ): FinancialsDailySnapshot {
-  const dayId = getDaysSinceEpoch(event.block.timestamp.toI32());
+  const dayId = getDaysSinceEpoch(block.timestamp.toI32());
   let financialMetrics = FinancialsDailySnapshot.load(dayId);
 
   if (!financialMetrics) {
@@ -148,8 +148,8 @@ export function getOrCreateFinancialDailySnapshots(
     financialMetrics.dailyTotalRevenueUSD = BIGDECIMAL_ZERO;
     financialMetrics.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
 
-    financialMetrics.blockNumber = event.block.number;
-    financialMetrics.timestamp = event.block.timestamp;
+    financialMetrics.blockNumber = block.number;
+    financialMetrics.timestamp = block.timestamp;
 
     financialMetrics.save();
   }
@@ -337,10 +337,8 @@ export function getOrCreateFeeType(
   return fees;
 }
 
-export function getFees(): CustomFeesType {
-  const boosterContract = Booster.bind(
-    Address.fromString(NetworkConfigs.getFactoryAddress())
-  );
+export function getFees(boosterAddr: Address): CustomFeesType {
+  const boosterContract = Booster.bind(boosterAddr);
 
   const lockIncentive = readValue<BigInt>(
     boosterContract.try_lockIncentive(),
@@ -368,10 +366,12 @@ export function getFees(): CustomFeesType {
 }
 
 export function getOrCreateVault(
+  boosterAddr: Address,
   poolId: BigInt,
-  event: ethereum.Event
+  block: ethereum.Block
 ): VaultStore | null {
-  const vaultId = NetworkConfigs.getFactoryAddress()
+  const vaultId = boosterAddr
+    .toHexString()
     .concat("-")
     .concat(poolId.toString());
   let vault = VaultStore.load(vaultId);
@@ -379,15 +379,13 @@ export function getOrCreateVault(
   if (!vault) {
     vault = new VaultStore(vaultId);
 
-    const boosterContract = Booster.bind(
-      Address.fromString(NetworkConfigs.getFactoryAddress())
-    );
+    const boosterContract = Booster.bind(boosterAddr);
 
     const poolInfoCall = boosterContract.try_poolInfo(poolId);
     if (poolInfoCall.reverted) {
       log.error("[NewVault]: PoolInfo Reverted, PoolId: {}, block: {}", [
         poolId.toString(),
-        event.block.number.toString(),
+        block.number.toString(),
       ]);
 
       return null;
@@ -397,7 +395,7 @@ export function getOrCreateVault(
 
     const inputToken = getOrCreateBalancerPoolToken(
       poolInfo.lpToken,
-      event.block.number
+      block.number
     );
     vault.inputToken = inputToken.id;
     vault.inputTokenBalance = BIGINT_ZERO;
@@ -406,15 +404,15 @@ export function getOrCreateVault(
     vault.symbol = inputToken.symbol;
     vault.protocol = NetworkConfigs.getFactoryAddress();
 
-    const outputToken = getOrCreateToken(poolInfo.token, event.block.number);
+    const outputToken = getOrCreateToken(poolInfo.token, block.number);
     vault.outputToken = outputToken.id;
     vault.outputTokenSupply = BIGINT_ZERO;
 
     vault.outputTokenPriceUSD = BIGDECIMAL_ZERO;
     vault.pricePerShare = BIGDECIMAL_ZERO;
 
-    vault.createdBlockNumber = event.block.number;
-    vault.createdTimestamp = event.block.timestamp;
+    vault.createdBlockNumber = block.number;
+    vault.createdTimestamp = block.timestamp;
 
     vault.totalValueLockedUSD = BIGDECIMAL_ZERO;
 
@@ -424,13 +422,13 @@ export function getOrCreateVault(
 
     const performanceFeeId = prefixID(
       VaultFeeType.PERFORMANCE_FEE,
-      NetworkConfigs.getFactoryAddress()
+      boosterAddr.toHexString()
     );
 
     getOrCreateFeeType(
       performanceFeeId,
       VaultFeeType.PERFORMANCE_FEE,
-      getFees().totalFees().times(BIGDECIMAL_HUNDRED)
+      getFees(boosterAddr).totalFees().times(BIGDECIMAL_HUNDRED)
     );
 
     vault.fees = [performanceFeeId];
@@ -438,7 +436,7 @@ export function getOrCreateVault(
     vault.rewardTokens = [
       getOrCreateRewardToken(
         Address.fromString(NetworkConfigs.getRewardToken()),
-        event.block.number
+        block.number
       ).id,
     ];
     vault.rewardTokenEmissionsAmount = [BIGINT_ZERO];
@@ -463,11 +461,11 @@ export function getOrCreateVault(
 
 export function getOrCreateVaultDailySnapshots(
   vaultId: string,
-  event: ethereum.Event
+  block: ethereum.Block
 ): VaultDailySnapshot {
   const id: string = vaultId
     .concat("-")
-    .concat(getDaysSinceEpoch(event.block.timestamp.toI32()));
+    .concat(getDaysSinceEpoch(block.timestamp.toI32()));
   let vaultSnapshots = VaultDailySnapshot.load(id);
 
   if (!vaultSnapshots) {
@@ -491,8 +489,8 @@ export function getOrCreateVaultDailySnapshots(
     vaultSnapshots.dailyTotalRevenueUSD = BIGDECIMAL_ZERO;
     vaultSnapshots.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
 
-    vaultSnapshots.blockNumber = event.block.number;
-    vaultSnapshots.timestamp = event.block.timestamp;
+    vaultSnapshots.blockNumber = block.number;
+    vaultSnapshots.timestamp = block.timestamp;
 
     vaultSnapshots.save();
   }
@@ -502,11 +500,11 @@ export function getOrCreateVaultDailySnapshots(
 
 export function getOrCreateVaultHourlySnapshots(
   vaultId: string,
-  event: ethereum.Event
+  block: ethereum.Block
 ): VaultHourlySnapshot {
   const id: string = vaultId
     .concat("-")
-    .concat(getHoursSinceEpoch(event.block.timestamp.toI32()));
+    .concat(getHoursSinceEpoch(block.timestamp.toI32()));
   let vaultSnapshots = VaultHourlySnapshot.load(id);
 
   if (!vaultSnapshots) {
@@ -530,8 +528,8 @@ export function getOrCreateVaultHourlySnapshots(
     vaultSnapshots.hourlyTotalRevenueUSD = BIGDECIMAL_ZERO;
     vaultSnapshots.cumulativeTotalRevenueUSD = BIGDECIMAL_ZERO;
 
-    vaultSnapshots.blockNumber = event.block.number;
-    vaultSnapshots.timestamp = event.block.timestamp;
+    vaultSnapshots.blockNumber = block.number;
+    vaultSnapshots.timestamp = block.timestamp;
 
     vaultSnapshots.save();
   }
