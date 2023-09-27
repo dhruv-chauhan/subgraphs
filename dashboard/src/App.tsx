@@ -16,6 +16,9 @@ function App() {
   const [protocolsToQuery, setProtocolsToQuery] = useState<{
     [type: string]: { [proto: string]: { [network: string]: string } };
   }>({});
+  const [protocolsToQueryStatusEndpoint, setProtocolsToQueryStatusEndpoint] = useState<{
+    [type: string]: { [proto: string]: { [network: string]: string } };
+  }>({});
 
   const [issuesMapping, setIssuesMapping] = useState<any>({});
 
@@ -61,6 +64,29 @@ function App() {
         console.log(err);
       });
   };
+
+  const getDeploymentsStatusEndpoint = () => {
+    // fetch("https://api.messari.io/subgraph-status/api/v1/status", {
+    fetch("https://api-stage.messari.io/subgraph-status/api/v1/status", {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        // "x-messari-api-key": "cAvRotuRe9zWMYhpoBQjnC3oF8sfOHgJC7d1Xr+vzUFIMbPM",
+        "x-messari-api-key": "JofoZit+7k3uCJ+38zXBbQ-yGUsjyAAi-GpaqQ82qMfz-VXr",
+      },
+    })
+      .then(function (res) {
+        console.log(res.json());
+        return res.json();
+      })
+      .then(function (json) {
+        setProtocolsToQueryStatusEndpoint(json);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  getDeploymentsStatusEndpoint();
 
   const aliasToProtocol: { [x: string]: string } = {};
 
